@@ -1,0 +1,3 @@
+[submodule "thirdparty/vibe_lwgan/vibe_lwgan"]
+	path = thirdparty/vibe_lwgan/vibe_lwgan
+	url = https://holoanton@bitbucket.org/vadimkalikin/vibe.git
