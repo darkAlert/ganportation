@@ -2,7 +2,7 @@ import os
 import argparse
 # from thirdparty.vibe_lwgan.models.vibe_rt import VibeRT
 # from thirdparty.vibe_lwgan.vibe_lwgan.lib.models.vibe_rt import VibeRT
-from vibe_lwgan import demo
+from vibe_lwgan.lib.models.vibe_rt import VibeRT
 
 
 def main():
