@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 from lwganrt.models.holoportator_rt import HoloportatorRT
 from lwganrt.options.test_options import TestOptions
+from lwganrt.utils.cv_utils import save_cv2_img
 import time
 
 
@@ -20,7 +21,9 @@ class HoloLwganRT:
         self.holoport_model.personalize(frame, smpl)
 
         # Inference:
-        self.holoport_model.view(view['R'], view['t'])
+        preds = self.holoport_model.view(view['R'], view['t'])
+
+        return preds
 
 
 def get_file_paths(path, exts=('.jpeg','.jpg','.png')):
@@ -105,6 +108,8 @@ def main():
     args.front_info = '/home/darkalert/builds/impersonator/assets/pretrains/front_facial.json'
     args.head_info = '/home/darkalert/builds/impersonator/assets/pretrains/head.json'
 
+    result_dir = os.path.join('/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/t1')
+
     # Init LWGAN-RT model:
     print('Initializing LWGAN-RT...')
     lwgan = HoloLwganRT(args)
@@ -125,6 +130,7 @@ def main():
     steps = 120
     delta = 360 / steps
     step_i = 0
+    results = []
     start = time.time()
 
     for sample in test_data:
@@ -136,12 +142,20 @@ def main():
         if step_i >= steps:
             step_i = 0
 
-        lwgan.inference(sample['frame'], sample['smpl'], view)
+        preds = lwgan.inference(sample['frame'], sample['smpl'], view)
+        results.append(preds)
 
     elapsed = time.time() - start
     fps = len(test_data) / elapsed
     print('Elapsed time:', elapsed, 'frames:', len(test_data), 'fps:', fps)
 
+    if result_dir is not None:
+        print ('Saving the results to', result_dir)
+        if not os.path.exists(result_dir):
+            os.makedirs(result_dir)
+        for idx, preds in enumerate(results):
+            out_path = os.path.join(result_dir, str(idx).zfill(5) + '.jpeg')
+            save_cv2_img(preds, out_path, normalize=True)
 
     print ('All done!')
 
