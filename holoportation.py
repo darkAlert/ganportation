@@ -1,7 +1,7 @@
 import os
 import argparse
 import time
-from holo_vibe import HoloVibeRT, load_data
+from hvibe import HoloVibeRT, load_data
 
 def init_vibe():
     print('Initializing VIBE...')
@@ -12,19 +12,19 @@ def init_vibe():
                         default=os.path.dirname(os.path.realpath(__file__)),
                         help='repo root dir')
     parser.add_argument('--smpl_model_dir', type=str,
-                        default='thirdparty/vibe_rt/vibe_rt/data/vibe_data',
+                        default='thirdparty/vibe/vibert/data/vibe_data',
                         help='dir the containing SMPL model')
     parser.add_argument('--smpl_mean_path', type=str,
-                        default='thirdparty/vibe_rt/vibe_rt/data/vibe_data/smpl_mean_params.npz',
+                        default='thirdparty/vibe/vibert/data/vibe_data/smpl_mean_params.npz',
                         help='path to SMPL mean params file')
     parser.add_argument('--j_regressor_path', type=str,
-                        default='thirdparty/vibe_rt/vibe_rt/data/vibe_data/J_regressor_extra.npy',
+                        default='thirdparty/vibe/vibert/data/vibe_data/J_regressor_extra.npy',
                         help='path to Joint regressor model')
     parser.add_argument('--spin_model_path', type=str,
-                        default='thirdparty/vibe_rt/vibe_rt/data/vibe_data/spin_model_checkpoint.pth.tar',
+                        default='thirdparty/vibe/vibert/data/vibe_data/spin_model_checkpoint.pth.tar',
                         help='path to spin model')
     parser.add_argument('--vibe_model_path', type=str,
-                        default='thirdparty/vibe_rt/vibe_rt/data/vibe_data/vibe_model_wo_3dpw.pth.tar',
+                        default='thirdparty/vibe/vibert/data/vibe_data/vibe_model_wo_3dpw.pth.tar',
                         help='path to pretrained VIBE model')
     parser.add_argument('--seqlen', type=int, default=1,
                         help='VIBE sequence length')
