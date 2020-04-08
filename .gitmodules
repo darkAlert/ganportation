@@ -2,3 +2,7 @@
 	path = thirdparty/vibe
 	url = https://holoanton@bitbucket.org/vadimkalikin/vibe.git
 	branch = RT
+[submodule "thirdparty/impersonator"]
+	path = thirdparty/impersonator
+	url = https://holoanton@bitbucket.org/kazendi/impersonator.git
+	branch = RT
