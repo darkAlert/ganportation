@@ -1,3 +1,4 @@
 [submodule "thirdparty/vibe"]
 	path = thirdparty/vibe
 	url = https://holoanton@bitbucket.org/vadimkalikin/vibe.git
+	branch = RT
