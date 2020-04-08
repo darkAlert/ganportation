@@ -4,7 +4,6 @@ import torch
 import numpy as np
 import cv2
 from vibe_rt.lib.models.vibert import VibeRT
-from vibe_rt.lib.utils.demo_utils import convert_crop_cam_to_orig_img
 from vibe_rt.lib.data_utils.img_utils import get_single_image_crop_demo
 from vibe_rt.holo.data_struct import DataStruct
 import time
@@ -70,7 +69,7 @@ def convert_crop_cam_to_another_crop(cam, bbox1, bbox2, img_width, img_height):
     return orig_cam
 
 
-def load_test_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, scale=1.1, crop_size=224):
+def load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, scale=1.1, crop_size=224):
     data_frames = DataStruct().parse(frames_dir, levels='subject/light/garment/scene/cam', ext='jpeg')
     data_yolo_bboxes = DataStruct().parse(yolo_bboxes_dir, levels='subject/light/garment/scene/cam', ext='npz')
     data_avatar_bbox = DataStruct().parse(avatar_bboxes_dir, levels='subject/light/garment/scene/cam', ext='npz')
@@ -156,7 +155,7 @@ def main():
     avatar_bboxes_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/bboxes'
     target_path = 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
     frames, yolo_bboxes, avatar_bboxes, frame_paths = \
-        load_test_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, args.bbox_scale, args.crop_size)
+        load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, args.bbox_scale, args.crop_size)
     print('Test data has been loaded:', frames.shape)
 
     # Inference:

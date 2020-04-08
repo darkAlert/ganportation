@@ -1,10 +1,11 @@
 import os
 import argparse
 import time
-from holo_vibe import HoloVibeRT, load_test_data
+from holo_vibe import HoloVibeRT, load_data
 
+def init_vibe():
+    print('Initializing VIBE...')
 
-def test_vibe():
     # Set params:
     parser = argparse.ArgumentParser()
     parser.add_argument('--root_dir', type=str,
@@ -33,19 +34,34 @@ def test_vibe():
                         help='crop size for input image')
     args = parser.parse_args()
 
-    # Init VIBE-RT model:
-    print('Initializing VIBE...')
-    vibe = HoloVibeRT(args)
+    return HoloVibeRT(args)
 
-    # Load test data:
+
+def load_test_data():
     print('Loading test data...')
+
     frames_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/frames'
     yolo_bboxes_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/bboxes_by_maskrcnn'
     avatar_bboxes_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/bboxes'
     target_path = 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
+    bbox_scale = 1.1
+    crop_size = 224
+
     frames, yolo_bboxes, avatar_bboxes, frame_paths = \
-        load_test_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, args.bbox_scale, args.crop_size)
+        load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, bbox_scale, crop_size)
+
     print('Test data has been loaded:', frames.shape)
+
+    return frames, yolo_bboxes, avatar_bboxes, frame_paths
+
+
+
+def test_vibe():
+    # Init VIBE-RT model:
+    vibe = init_vibe()
+
+    # Load test data:
+    frames, yolo_bboxes, avatar_bboxes, frame_paths = load_test_data()
 
     # Inference:
     print('Inferencing...')

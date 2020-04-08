@@ -1,3 +1,6 @@
-[submodule "thirdparty/vibe_rt"]
-	path = thirdparty/vibe_rt
+[submodule "thirdparty/vibert"]
+	path = thirdparty/vibert
+	url = https://holoanton@bitbucket.org/vadimkalikin/vibe.git
+[submodule "thirdparty/vibe"]
+	path = thirdparty/vibe
 	url = https://holoanton@bitbucket.org/vadimkalikin/vibe.git
