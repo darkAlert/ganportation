@@ -1,67 +1,43 @@
 import os
-import argparse
 import time
-from hvibe import HoloVibeRT, load_data
-
-def init_vibe():
-    print('Initializing VIBE...')
-
-    # Set params:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--root_dir', type=str,
-                        default=os.path.dirname(os.path.realpath(__file__)),
-                        help='repo root dir')
-    parser.add_argument('--smpl_model_dir', type=str,
-                        default='thirdparty/vibe/vibert/data/vibe_data',
-                        help='dir the containing SMPL model')
-    parser.add_argument('--smpl_mean_path', type=str,
-                        default='thirdparty/vibe/vibert/data/vibe_data/smpl_mean_params.npz',
-                        help='path to SMPL mean params file')
-    parser.add_argument('--j_regressor_path', type=str,
-                        default='thirdparty/vibe/vibert/data/vibe_data/J_regressor_extra.npy',
-                        help='path to Joint regressor model')
-    parser.add_argument('--spin_model_path', type=str,
-                        default='thirdparty/vibe/vibert/data/vibe_data/spin_model_checkpoint.pth.tar',
-                        help='path to spin model')
-    parser.add_argument('--vibe_model_path', type=str,
-                        default='thirdparty/vibe/vibert/data/vibe_data/vibe_model_wo_3dpw.pth.tar',
-                        help='path to pretrained VIBE model')
-    parser.add_argument('--seqlen', type=int, default=1,
-                        help='VIBE sequence length')
-    parser.add_argument('--bbox_scale', type=float, default=1.1,
-                        help='scale for input bounding box')
-    parser.add_argument('--crop_size', type=int, default=224,
-                        help='crop size for input image')
-    args = parser.parse_args()
-
-    return HoloVibeRT(args)
+import numpy as np
+from tests.test_vibe import load_data as load_vibe_data
+from tests.test_vibe import init_vibe
+from tests.test_lwgan import load_data as load_lwgan_data
+from tests.test_lwgan import init_lwgan
+from hlwgan import parse_view_params
 
 
-def load_test_data():
-    print('Loading test data...')
-
+def prepare_vibe_test_data(bbox_scale, crop_size):
     frames_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/frames'
     yolo_bboxes_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/bboxes_by_maskrcnn'
     avatar_bboxes_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/bboxes'
     target_path = 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
-    bbox_scale = 1.1
-    crop_size = 224
 
     frames, yolo_bboxes, avatar_bboxes, frame_paths = \
-        load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, bbox_scale, crop_size)
-
-    print('Test data has been loaded:', frames.shape)
+        load_vibe_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, bbox_scale, crop_size)
 
     return frames, yolo_bboxes, avatar_bboxes, frame_paths
 
 
+def prepare_lwgan_test_data(image_size):
+    frames_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/avatars'
+    smpls_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/smpls_by_vibe_aligned_lwgan'
+    scene_path = 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
+    frames_dir = os.path.join(frames_dir, scene_path)
+    smpls_dir = os.path.join(smpls_dir, scene_path)
+
+    return load_lwgan_data(frames_dir, smpls_dir, image_size)
+
 
 def test_vibe():
     # Init VIBE-RT model:
-    vibe = init_vibe()
+    vibe, args = init_vibe()
 
     # Load test data:
-    frames, yolo_bboxes, avatar_bboxes, frame_paths = load_test_data()
+    print('Loading vibe test data...')
+    frames, yolo_bboxes, avatar_bboxes, frame_paths = prepare_vibe_test_data(args.bbox_scale, args.crop_size)
+    print('Test data has been loaded:', frames.shape)
 
     # Inference:
     print('Inferencing...')
@@ -77,8 +53,43 @@ def test_vibe():
     print('Elapsed time:', elapsed, 'frames:', frames.shape[0], 'fps:', fps)
 
 
+def test_lwgan(steps = 120):
+    # Init LWGAN-RT model:
+    lwgan, args = init_lwgan()
+
+    # Load test data:
+    print('Loading lwgan test data...')
+    test_data = prepare_lwgan_test_data(args.image_size)
+    print('Test data has been loaded:', len(test_data))
+
+    # Inference:
+    print('Inferencing...')
+    view = parse_view_params('R=0,90,0/t=0,0,0')
+    delta = 360 / steps
+    step_i = 0
+    lwgan_outputs = []
+    start = time.time()
+
+    for sample in test_data:
+        view['R'][0] = 0
+        view['R'][1] = delta * step_i / 180.0 * np.pi
+        view['R'][2] = 0
+
+        step_i += 1
+        if step_i >= steps:
+            step_i = 0
+
+        preds = lwgan.inference(sample['frame'], sample['smpl'], view)
+        lwgan_outputs.append(preds)
+
+    elapsed = time.time() - start
+    fps = len(test_data) / elapsed
+    print('Elapsed time:', elapsed, 'frames:', len(test_data), 'fps:', fps)
+
+
 def main():
     test_vibe()
+    test_lwgan()
 
     print('All done!')
 
