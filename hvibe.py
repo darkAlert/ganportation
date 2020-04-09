@@ -40,7 +40,7 @@ class HoloVibeRT():
             }
 
 
-def convert_crop_cam_to_another_crop(cam, bbox1, bbox2, img_width, img_height):
+def convert_crop_cam_to_another_crop(cam, bbox1, bbox2):
     bbox = bbox1[:,:3] - bbox2[:,:3]
     bbox[:,2] = bbox1[:,2]
     img_width = bbox2[0,2]

@@ -143,8 +143,7 @@ def main():
         # Recalculate cam params:
         avatar_cam = convert_crop_cam_to_another_crop(cam=pred_cam,
                                                       bbox1=yolo_bboxes,
-                                                      bbox2=avatar_bboxes,
-                                                      img_width=img_width, img_height=img_height)
+                                                      bbox2=avatar_bboxes)
         if avatar_cam.shape[1] > 3:
             avatar_cam = np.stack((avatar_cam[:, 0], avatar_cam[:, 2], avatar_cam[:, 3]), axis=1)
         assert avatar_cam.shape[1] == 3
