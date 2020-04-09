@@ -5,6 +5,7 @@ from tests.test_vibe import load_data as load_vibe_data
 from tests.test_vibe import init_vibe
 from tests.test_lwgan import load_data as load_lwgan_data
 from tests.test_lwgan import init_lwgan
+from hvibe import convert_cam
 from hlwgan import parse_view_params
 
 
@@ -14,10 +15,9 @@ def prepare_vibe_test_data(bbox_scale, crop_size):
     avatar_bboxes_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/bboxes'
     target_path = 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
 
-    frames, yolo_bboxes, avatar_bboxes, frame_paths = \
-        load_vibe_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, bbox_scale, crop_size)
+    test_data = load_vibe_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, bbox_scale, crop_size)
 
-    return frames, yolo_bboxes, avatar_bboxes, frame_paths
+    return test_data
 
 
 def prepare_lwgan_test_data(image_size):
@@ -36,21 +36,31 @@ def test_vibe():
 
     # Load test data:
     print('Loading vibe test data...')
-    frames, yolo_bboxes, avatar_bboxes, frame_paths = prepare_vibe_test_data(args.bbox_scale, args.crop_size)
-    print('Test data has been loaded:', frames.shape)
+    test_data = prepare_vibe_test_data(args.bbox_scale, args.crop_size)
+    print('Test data has been loaded:', len(test_data))
 
     # Inference:
     print('Inferencing...')
-    vibe_outputs = []
     start = time.time()
 
-    for frame in frames:
-        output = vibe.inference(frame)
-        vibe_outputs.append(output)
+    for data in test_data:
+        output = vibe.inference(data['vibe_input'])
+
+        avatar_cam = convert_cam(cam=output['pred_cam'].numpy(),
+                                 bbox1=data['yolo_bbox'],
+                                 bbox2=data['scene_bbox'],
+                                 truncated=True)
+        data['smpl'] = {
+            'pred_cam': output['pred_cam'].numpy(),
+            'pose': output['pose'].numpy(),
+            'betas': output['betas'].numpy(),
+            'rotmat': output['rotmat'].numpy(),
+            'avatar_cam': avatar_cam,
+        }
 
     elapsed = time.time() - start
-    fps = frames.shape[0] / elapsed
-    print('Elapsed time:', elapsed, 'frames:', frames.shape[0], 'fps:', fps)
+    fps = len(test_data) / elapsed
+    print('Elapsed time:', elapsed, 'frames:', len(test_data), 'fps:', fps)
 
 
 def test_lwgan(steps = 120):
@@ -87,9 +97,25 @@ def test_lwgan(steps = 120):
     print('Elapsed time:', elapsed, 'frames:', len(test_data), 'fps:', fps)
 
 
+def test_vibe_lwgan_rt():
+    # Init VIBE-RT model:
+    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+    vibe, vibe_args = init_vibe()
+
+    # Init LWGAN-RT model:
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    lwgan, lwgan_args = init_lwgan('0')
+
+    # Load test data:
+    print('Loading test data...')
+    test_data = prepare_vibe_test_data(vibe_args.bbox_scale, vibe_args.crop_size)
+    print('Test data has been loaded:', len(test_data))
+
+
 def main():
-    test_vibe()
-    test_lwgan()
+    # test_vibe()
+    # test_lwgan()
+    test_vibe_lwgan_rt()
 
     print('All done!')
 

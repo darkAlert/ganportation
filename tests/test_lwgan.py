@@ -50,10 +50,10 @@ def load_data(frames_dir, smpls_dir, img_size):
     return data
 
 
-def init_lwgan():
+def init_lwgan(gpu_id='0'):
     # Set params:
     args = TestOptions().parse()
-    args.gpu = '0'
+    args.gpu = gpu_id
     args.gen_name = "holoportator"
     args.image_size = 256
     args.bg_ks = 11

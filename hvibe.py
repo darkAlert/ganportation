@@ -27,7 +27,7 @@ class HoloVibeRT():
 
     def inference(self, frame):
         with torch.no_grad():
-            frame = frame.unsqueeze(0).unsqueeze(0)
+            frame = frame.unsqueeze(0)
             frame = frame.to(self.device)
 
             preds = self.vibe_model(frame)[-1]
@@ -40,7 +40,7 @@ class HoloVibeRT():
             }
 
 
-def convert_crop_cam_to_another_crop(cam, bbox1, bbox2):
+def convert_cam(cam, bbox1, bbox2, truncated=True):
     bbox = bbox1[:,:3] - bbox2[:,:3]
     bbox[:,2] = bbox1[:,2]
     img_width = bbox2[0,2]
@@ -52,6 +52,10 @@ def convert_crop_cam_to_another_crop(cam, bbox1, bbox2):
     sy = cam[:,0] * (1. / (img_height / h))
     tx = ((cx ) / hw / sx) + cam[:,1]
     ty = ((cy ) / hh / sy) + cam[:,2]
-    orig_cam = np.stack([sx, sy, tx, ty]).T
+
+    if truncated:
+        orig_cam = np.stack([sx, tx, ty]).T
+    else:
+        orig_cam = np.stack([sx, sy, tx, ty]).T
 
     return orig_cam

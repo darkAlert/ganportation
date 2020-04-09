@@ -5,7 +5,7 @@ import numpy as np
 import cv2
 from vibert.lib.data_utils.img_utils import get_single_image_crop_demo
 from vibert.holo.data_struct import DataStruct
-from hvibe import HoloVibeRT, convert_crop_cam_to_another_crop
+from hvibe import HoloVibeRT, convert_cam
 import time
 
 
@@ -13,7 +13,8 @@ def load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, scale
     data_frames = DataStruct().parse(frames_dir, levels='subject/light/garment/scene/cam', ext='jpeg')
     data_yolo_bboxes = DataStruct().parse(yolo_bboxes_dir, levels='subject/light/garment/scene/cam', ext='npz')
     data_avatar_bbox = DataStruct().parse(avatar_bboxes_dir, levels='subject/light/garment/scene/cam', ext='npz')
-    frames = []
+    frames, norm_frames = [], []
+    yolo_bboxes, avatar_bboxes, frame_paths = None, None, None
 
     for (f_node, f_path), (y_node, y_path), (a_node, a_path) in \
             zip(data_frames.nodes('cam'), data_yolo_bboxes.nodes('cam'), data_avatar_bbox.nodes('cam')):
@@ -45,11 +46,25 @@ def load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, scale
         for i in range(len(frame_paths)):
             img_path = os.path.join(frames_dir, frame_paths[i])
             img = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
+            frames.append(np.expand_dims(img, axis=0))
             norm_img,_,_ = get_single_image_crop_demo(img, yolo_bboxes[i], kp_2d=None, scale=scale, crop_size=crop_size)
-            frames.append(norm_img.unsqueeze(0))
+            norm_frames.append(norm_img.unsqueeze(0))
         break
 
-    return torch.cat(frames, dim=0), yolo_bboxes, avatar_bboxes, frame_paths
+    assert len(frames) == len(norm_frames) and len(frames) == yolo_bboxes.shape[0] and len(frames) == avatar_bboxes.shape[0] and len(frames) == frame_paths.shape[0]
+
+    # Pack data:
+    data = []
+    for i in range(len(frames)):
+        data.append({
+            'frame': frames[i],
+            'vibe_input': norm_frames[i],
+            'yolo_bbox': np.expand_dims(yolo_bboxes[i], axis=0),
+            'scene_bbox' : np.expand_dims(avatar_bboxes[i], axis=0),
+            'path' : np.expand_dims(frame_paths[i], axis=0)
+        })
+
+    return data
 
 
 def init_vibe():
@@ -110,54 +125,60 @@ def main():
     yolo_bboxes_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/bboxes_by_maskrcnn'
     avatar_bboxes_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/bboxes'
     target_path = 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
-    frames, yolo_bboxes, avatar_bboxes, frame_paths = \
-        load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, args.bbox_scale, args.crop_size)
-    print('Test data has been loaded:', frames.shape)
+    test_data = load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, args.bbox_scale, args.crop_size)
+    print('Test data has been loaded:', len(test_data))
 
     # Inference:
     print('Inferencing...')
-    pred_cam, pred_pose, pred_betas, pred_rotmat = [], [], [], []
     start = time.time()
 
-    for frame in frames:
-        output = vibe.inference(frame)
+    for data in test_data:
+        output = vibe.inference(data['vibe_input'])
 
-        if result_dir is not None:
-            pred_cam.append(output['pred_cam'])
-            pred_pose.append(output['pose'])
-            pred_betas.append(output['betas'])
-            pred_rotmat.append(output['rotmat'])
+        avatar_cam = convert_cam(cam=output['pred_cam'].numpy(),
+                                 bbox1=data['yolo_bbox'],
+                                 bbox2=data['scene_bbox'],
+                                 truncated=True)
+        data['smpl'] = {
+            'pred_cam': output['pred_cam'].numpy(),
+            'pose': output['pose'].numpy(),
+            'betas': output['betas'].numpy(),
+            'rotmat': output['rotmat'].numpy(),
+            'avatar_cam': avatar_cam,
+        }
 
     elapsed = time.time() - start
-    fps = frames.shape[0] / elapsed
-    print('Elapsed time:', elapsed, 'frames:', frames.shape[0], 'fps:', fps)
+    fps = len(test_data) / elapsed
+    print('Elapsed time:', elapsed, 'frames:', len(test_data), 'fps:', fps)
 
     # Save the results:
     if result_dir is not None:
-        pred_cam = torch.cat(pred_cam, dim=0).numpy()
-        pred_pose = torch.cat(pred_pose, dim=0).numpy()
-        pred_betas = torch.cat(pred_betas, dim=0).numpy()
-        pred_rotmat = torch.cat(pred_rotmat, dim=0).numpy()
-        img_width, img_height = 1920, 1080    # dummy bboxes
+        pose, betas, rotmat, avatar_cam, frame_paths = [], [], [], [], []
 
-        # Recalculate cam params:
-        avatar_cam = convert_crop_cam_to_another_crop(cam=pred_cam,
-                                                      bbox1=yolo_bboxes,
-                                                      bbox2=avatar_bboxes)
-        if avatar_cam.shape[1] > 3:
-            avatar_cam = np.stack((avatar_cam[:, 0], avatar_cam[:, 2], avatar_cam[:, 3]), axis=1)
-        assert avatar_cam.shape[1] == 3
+        # Merge outputs:
+        for data in test_data:
+            pose.append(data['smpl']['pose'])
+            betas.append(data['smpl']['betas'])
+            rotmat.append(data['smpl']['rotmat'])
+            avatar_cam.append(data['smpl']['avatar_cam'])
+            frame_paths.append(data['path'])
+        pose = np.concatenate(pose, axis=0)
+        betas = np.concatenate(betas, axis=0)
+        rotmat = np.concatenate(rotmat, axis=0)
+        avatar_cam = np.concatenate(avatar_cam, axis=0)
+        frame_paths = np.concatenate(frame_paths, axis=0)
 
         # Save:
         output_dir = os.path.join(result_dir,target_path)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         output_path = os.path.join(output_dir, 'smpl.npz')
+
         np.savez(output_path,
                  avatar_cam=avatar_cam,
-                 pose=pred_pose,
-                 betas=pred_betas,
-                 rotmat=pred_rotmat,
+                 pose=pose,
+                 betas=betas,
+                 rotmat=rotmat,
                  frame_paths=frame_paths)
         print ('The results have been saved to', result_dir)
 
