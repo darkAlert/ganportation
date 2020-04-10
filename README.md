@@ -1,29 +1,29 @@
-# README #
+﻿# USING DOCKER #
 
-This README would normally document whatever steps are necessary to get your application up and running.
 
-### What is this repository for? ###
+### Install Docker ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+sudo apt-get remove docker docker-engine docker.io containerd runc
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io
 
-### How do I get set up? ###
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+### INSTALL NVIDIA CONTAINER ###
 
-### Contribution guidelines ###
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
 
-* Writing tests
-* Code review
-* Other guidelines
+sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
+sudo systemctl restart docker
 
-### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+### Add requirements ###
+
+Add the required libraries to the requirements.txt
+
+
+### Build & run dockerfile ###
+
+sudo docker build -t docker-test .
+sudo docker run --gpus all --rm -ti --ipc=host docker-test python3 docker_test.py
