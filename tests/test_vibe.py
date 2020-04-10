@@ -13,8 +13,8 @@ def load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, scale
     data_frames = DataStruct().parse(frames_dir, levels='subject/light/garment/scene/cam', ext='jpeg')
     data_yolo_bboxes = DataStruct().parse(yolo_bboxes_dir, levels='subject/light/garment/scene/cam', ext='npz')
     data_avatar_bbox = DataStruct().parse(avatar_bboxes_dir, levels='subject/light/garment/scene/cam', ext='npz')
-    frames, norm_frames = [], []
-    yolo_bboxes, avatar_bboxes, frame_paths = None, None, None
+    frames, vibe_frames = [], []
+    yolo_cbboxes, avatar_bboxes, avatar_cbboxes, frame_paths = None, None, None, None
 
     for (f_node, f_path), (y_node, y_path), (a_node, a_path) in \
             zip(data_frames.nodes('cam'), data_yolo_bboxes.nodes('cam'), data_avatar_bbox.nodes('cam')):
@@ -27,40 +27,42 @@ def load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, scale
         bboxes_path = [npz.abs_path for npz in data_yolo_bboxes.items(y_node)][0]
         bboxes_npz = np.load(bboxes_path, encoding='latin1', allow_pickle=True)
         frame_ids = np.array(bboxes_npz['frames'])
-        yolo_bboxes = np.array(bboxes_npz['bboxes'])
-        yolo_bboxes[:, 0] = yolo_bboxes[:, 0] + yolo_bboxes[:, 2] * 0.5  # (x,y,w,h) -> (cx,cy,w,h)
-        yolo_bboxes[:, 1] = yolo_bboxes[:, 1] + yolo_bboxes[:, 3] * 0.5
+        yolo_cbboxes = np.array(bboxes_npz['bboxes'])
+        yolo_cbboxes[:, 0] = yolo_cbboxes[:, 0] + yolo_cbboxes[:, 2] * 0.5  # (x,y,w,h) -> (cx,cy,w,h)
+        yolo_cbboxes[:, 1] = yolo_cbboxes[:, 1] + yolo_cbboxes[:, 3] * 0.5
 
         # Unpack npz containing avatar bboxes:
         bboxes_path = [npz.abs_path for npz in data_avatar_bbox.items(a_node)][0]
         bboxes_npz = np.load(bboxes_path, encoding='latin1', allow_pickle=True)
         avatar_bboxes = np.array(bboxes_npz['bboxes'])
-        avatar_bboxes[:, 0] = avatar_bboxes[:, 0] + avatar_bboxes[:, 2] * 0.5  # (x,y,w,h) -> (cx,cy,w,h)
-        avatar_bboxes[:, 1] = avatar_bboxes[:, 1] + avatar_bboxes[:, 3] * 0.5
+        avatar_cbboxes = avatar_bboxes.copy()
+        avatar_cbboxes[:, 0] = avatar_cbboxes[:, 0] + avatar_cbboxes[:, 2] * 0.5  # (x,y,w,h) -> (cx,cy,w,h)
+        avatar_cbboxes[:, 1] = avatar_cbboxes[:, 1] + avatar_cbboxes[:, 3] * 0.5
 
         # Prepare frames:
         frame_paths = np.array([f.path for f in data_frames.items(f_node)])
         frame_paths = frame_paths[frame_ids]
-        assert len(frame_paths) == yolo_bboxes.shape[0]
+        assert len(frame_paths) == yolo_cbboxes.shape[0]
 
         for i in range(len(frame_paths)):
             img_path = os.path.join(frames_dir, frame_paths[i])
             img = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
-            frames.append(np.expand_dims(img, axis=0))
-            norm_img,_,_ = get_single_image_crop_demo(img, yolo_bboxes[i], kp_2d=None, scale=scale, crop_size=crop_size)
-            norm_frames.append(norm_img.unsqueeze(0))
+            frames.append(img)
+            norm_img,_,_ = get_single_image_crop_demo(img, yolo_cbboxes[i], kp_2d=None, scale=scale, crop_size=crop_size)
+            vibe_frames.append(norm_img.unsqueeze(0))
         break
 
-    assert len(frames) == len(norm_frames) and len(frames) == yolo_bboxes.shape[0] and len(frames) == avatar_bboxes.shape[0] and len(frames) == frame_paths.shape[0]
+    assert len(frames) == len(vibe_frames) and len(frames) == yolo_cbboxes.shape[0] and len(frames) == avatar_bboxes.shape[0] and len(frames) == frame_paths.shape[0]
 
     # Pack data:
     data = []
     for i in range(len(frames)):
         data.append({
             'frame': frames[i],
-            'vibe_input': norm_frames[i],
-            'yolo_bbox': np.expand_dims(yolo_bboxes[i], axis=0),
+            'vibe_input': vibe_frames[i],
+            'yolo_cbbox': np.expand_dims(yolo_cbboxes[i], axis=0),
             'scene_bbox' : np.expand_dims(avatar_bboxes[i], axis=0),
+            'scene_cbbox': np.expand_dims(avatar_cbboxes[i], axis=0),
             'path' : np.expand_dims(frame_paths[i], axis=0)
         })
 
@@ -136,8 +138,8 @@ def main():
         output = vibe.inference(data['vibe_input'])
 
         avatar_cam = convert_cam(cam=output['pred_cam'].numpy(),
-                                 bbox1=data['yolo_bbox'],
-                                 bbox2=data['scene_bbox'],
+                                 bbox1=data['yolo_cbbox'],
+                                 bbox2=data['scene_cbbox'],
                                  truncated=True)
         data['smpl'] = {
             'pred_cam': output['pred_cam'].numpy(),

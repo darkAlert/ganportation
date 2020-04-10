@@ -1,10 +1,10 @@
 import os
 import numpy as np
 import cv2
-from lwganrt.models.holoportator_rt import HoloportatorRT
 from lwganrt.options.test_options import TestOptions
 from lwganrt.utils.cv_utils import save_cv2_img
 from hlwgan import HoloLwganRT, parse_view_params
+from lwganrt.models.holoportator_rt import prepare_input as prepare_lwgan_input
 import time
 
 
@@ -44,8 +44,8 @@ def load_data(frames_dir, smpls_dir, img_size):
     # Prepare data:
     data = []
     for img, smpl in zip(images, smpls):
-        prep_img, prep_smpl = HoloportatorRT.prepare_input(img, smpl, img_size)
-        data.append({'frame': prep_img, 'smpl': prep_smpl})
+        prep_img, prep_smpl = prepare_lwgan_input(img, smpl, img_size)
+        data.append({'lwgan_input': prep_img, 'smpl': prep_smpl})
 
     return data
 
@@ -104,7 +104,7 @@ def main():
     results = []
     start = time.time()
 
-    for sample in test_data:
+    for data in test_data:
         view['R'][0] = 0
         view['R'][1] = delta * step_i / 180.0 * np.pi
         view['R'][2] = 0
@@ -113,7 +113,7 @@ def main():
         if step_i >= steps:
             step_i = 0
 
-        preds = lwgan.inference(sample['frame'], sample['smpl'], view)
+        preds = lwgan.inference(data['lwgan_input'], data['smpl'], view)
         results.append(preds)
 
     elapsed = time.time() - start
