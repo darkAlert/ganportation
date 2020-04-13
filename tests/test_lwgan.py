@@ -51,27 +51,27 @@ def load_data(frames_dir, smpls_dir, img_size):
     return data
 
 
-def init_lwgan(conf):
+def init_lwgan(lwgan_conf):
     # Set params:
     args = TestOptions().parse()
-    args.gpu = conf['lwgan']['gpu']
-    args.gen_name = conf['lwgan']['gen_name']
-    args.image_size = conf['lwgan']['image_size']
-    args.bg_ks = conf['lwgan']['bg_ks']
-    args.ft_ks = conf['lwgan']['ft_ks']
-    args.has_detector = conf['lwgan']['has_detector']
-    args.post_tune = conf['lwgan']['post_tune']
-    args.front_warp = conf['lwgan']['front_warp']
-    args.save_res = conf['lwgan']['save_res']
-    args.n_threads_test = conf['lwgan']['n_threads_test']
-    args.load_path = conf['lwgan']['load_path']
-    args.smpl_model = conf['lwgan']['smpl_model']
-    args.hmr_model = conf['lwgan']['hmr_model']
-    args.smpl_faces = conf['lwgan']['smpl_faces']
-    args.uv_mapping = conf['lwgan']['uv_mapping']
-    args.part_info = conf['lwgan']['part_info']
-    args.front_info = conf['lwgan']['front_info']
-    args.head_info = conf['lwgan']['head_info']
+    args.gpu = lwgan_conf['gpu']
+    args.gen_name = lwgan_conf['gen_name']
+    args.image_size = lwgan_conf['image_size']
+    args.bg_ks = lwgan_conf['bg_ks']
+    args.ft_ks = lwgan_conf['ft_ks']
+    args.has_detector = lwgan_conf['has_detector']
+    args.post_tune = lwgan_conf['post_tune']
+    args.front_warp = lwgan_conf['front_warp']
+    args.save_res = lwgan_conf['save_res']
+    args.n_threads_test = lwgan_conf['n_threads_test']
+    args.load_path = lwgan_conf['load_path']
+    args.smpl_model = lwgan_conf['smpl_model']
+    args.hmr_model = lwgan_conf['hmr_model']
+    args.smpl_faces = lwgan_conf['smpl_faces']
+    args.uv_mapping = lwgan_conf['uv_mapping']
+    args.part_info = lwgan_conf['part_info']
+    args.front_info = lwgan_conf['front_info']
+    args.head_info = lwgan_conf['head_info']
 
     # Init LWGAN-RT model:
     print('Initializing LWGAN-RT...')
@@ -82,25 +82,25 @@ def init_lwgan(conf):
 
 def main(path_to_conf):
     # Load config:
-    lwgan_conf = parse_conf(path_to_conf)
+    conf = parse_conf(path_to_conf)
     print ('Config has been loaded from', path_to_conf)
 
     # Init LWGAN-RT model:
-    lwgan, args = init_lwgan(lwgan_conf)
+    lwgan, args = init_lwgan(conf['lwgan'])
 
     # Load test data:
-    target_path = lwgan_conf['input']['target_path']
-    frames_dir = os.path.join(lwgan_conf['input']['frames_dir'], target_path)
-    smpls_dir = os.path.join(lwgan_conf['input']['smpls_dir'], target_path)
+    target_path = conf['input']['target_path']
+    frames_dir = os.path.join(conf['input']['frames_dir'], target_path)
+    smpls_dir = os.path.join(conf['input']['smpls_dir'], target_path)
     print('Loading test data...')
     test_data = load_data(frames_dir, smpls_dir, args.image_size)
     print('Test data has been loaded:', len(test_data))
 
     # Inference:
     print('Inferencing...')
-    result_dir = lwgan_conf['output']['result_dir']
-    steps = lwgan_conf['input']['steps']
-    view = parse_view_params(lwgan_conf['input']['view'])
+    result_dir = conf['output']['result_dir']
+    steps = conf['input']['steps']
+    view = parse_view_params(conf['input']['view'])
     delta = 360 / steps
     step_i = 0
     results = []
@@ -135,4 +135,4 @@ def main(path_to_conf):
 
 
 if __name__ == '__main__':
-    main(path_to_conf='conf/lwgan_conf_local.yaml')
+    main(path_to_conf='conf/local/lwgan_conf_local.yaml')

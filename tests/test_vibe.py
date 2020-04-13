@@ -69,7 +69,7 @@ def load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, scale
     return data
 
 
-def init_vibe(conf):
+def init_vibe(vibe_conf):
     # Init params:
     parser = argparse.ArgumentParser()
     parser.add_argument('--root_dir', type=str,
@@ -99,8 +99,8 @@ def init_vibe(conf):
     args = parser.parse_args()
 
     # Set params:
-    args.seqlen = conf['vibe']['seqlen']
-    args.root_dir = conf['vibe']['root_dir']
+    args.seqlen = vibe_conf['seqlen']
+    args.root_dir = vibe_conf['root_dir']
     args.spin_model_path = os.path.join(args.root_dir, args.spin_model_path)
     args.smpl_model_dir = os.path.join(args.root_dir, args.smpl_model_dir)
     args.smpl_mean_path = os.path.join(args.root_dir, args.smpl_mean_path)
@@ -117,24 +117,24 @@ def init_vibe(conf):
 
 def main(path_to_conf):
     # Load config:
-    vibe_conf = parse_conf(path_to_conf)
+    conf = parse_conf(path_to_conf)
     print ('Config has been loaded from', path_to_conf)
 
     # Init VIBE-RT model:
-    vibe, args = init_vibe(vibe_conf)
+    vibe, args = init_vibe(conf['vibe'])
 
     # Load test data:
     print('Loading test data...')
-    frames_dir = vibe_conf['input']['frames_dir']
-    yolo_bboxes_dir = vibe_conf['input']['yolo_bboxes_dir']
-    avatar_bboxes_dir = vibe_conf['input']['avatar_bboxes_dir']
-    target_path = vibe_conf['input']['target_path']
+    frames_dir = conf['input']['frames_dir']
+    yolo_bboxes_dir = conf['input']['yolo_bboxes_dir']
+    avatar_bboxes_dir = conf['input']['avatar_bboxes_dir']
+    target_path = conf['input']['target_path']
     test_data = load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, args.bbox_scale, args.crop_size)
     print('Test data has been loaded:', len(test_data))
 
     # Inference:
     print('Inferencing...')
-    result_dir = vibe_conf['output']['result_dir']
+    result_dir = conf['output']['result_dir']
     start = time.time()
 
     for data in test_data:
@@ -191,4 +191,4 @@ def main(path_to_conf):
 
 
 if __name__ == '__main__':
-    main(path_to_conf='conf/vibe_conf_local.yaml')
+    main(path_to_conf='conf/local/vibe_conf_local.yaml')

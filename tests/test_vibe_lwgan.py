@@ -1,7 +1,6 @@
 import os
 import time
 import numpy as np
-import cv2
 from tests.test_vibe import load_data as load_vibe_data
 from tests.test_vibe import init_vibe
 from tests.test_lwgan import load_data as load_lwgan_data
@@ -10,36 +9,42 @@ from hvibe import convert_cam
 from hlwgan import parse_view_params
 from lwganrt.models.holoportator_rt import prepare_input as prepare_lwgan_input
 from lwganrt.utils.cv_utils import save_cv2_img
+from conf.conf_parser import parse_conf
 
 
-def prepare_vibe_test_data(bbox_scale, crop_size):
-    frames_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/frames'
-    yolo_bboxes_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/bboxes_by_maskrcnn'
-    avatar_bboxes_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/bboxes'
-    target_path = 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
+def prepare_vibe_test_data(conf_input, conf_vibe):
+    frames_dir = conf_input['frames_dir']
+    yolo_bboxes_dir = conf_input['yolo_bboxes_dir']
+    avatar_bboxes_dir = conf_input['avatar_bboxes_dir']
+    target_path = conf_input['target_path']
+    bbox_scale = conf_vibe['scale']
+    crop_size = conf_vibe['crop_size']
 
     test_data = load_vibe_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, bbox_scale, crop_size)
 
     return test_data
 
 
-def prepare_lwgan_test_data(image_size):
-    frames_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/avatars'
-    smpls_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/smpls_by_vibe_aligned_lwgan'
-    scene_path = 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
-    frames_dir = os.path.join(frames_dir, scene_path)
-    smpls_dir = os.path.join(smpls_dir, scene_path)
+def prepare_lwgan_test_data(conf):
+    target_path = conf['input']['target_path']
+    frames_dir = os.path.join(conf['input']['frames_dir'], target_path)
+    smpls_dir = os.path.join(conf['input']['smpls_dir'], target_path)
+    image_size = conf['lwgan']['image_size']
 
     return load_lwgan_data(frames_dir, smpls_dir, image_size)
 
 
-def test_vibe():
+def test_vibe(path_to_conf):
+    # Load config:
+    conf = parse_conf(path_to_conf)
+    print ('Config has been loaded from', path_to_conf)
+
     # Init VIBE-RT model:
-    vibe, args = init_vibe()
+    vibe, args = init_vibe(conf['vibe'])
 
     # Load test data:
     print('Loading vibe test data...')
-    test_data = prepare_vibe_test_data(args.bbox_scale, args.crop_size)
+    test_data = prepare_vibe_test_data(conf['input'], conf['vibe'])
     print('Test data has been loaded:', len(test_data))
 
     # Inference:
@@ -66,9 +71,13 @@ def test_vibe():
     print('Elapsed time:', elapsed, 'frames:', len(test_data), 'fps:', fps)
 
 
-def test_lwgan(steps = 120):
+def test_lwgan(path_to_conf):
+    # Load config:
+    conf = parse_conf(path_to_conf)
+    print ('Config has been loaded from', path_to_conf)
+
     # Init LWGAN-RT model:
-    lwgan, args = init_lwgan()
+    lwgan, args = init_lwgan(conf['lwgan'])
 
     # Load test data:
     print('Loading lwgan test data...')
@@ -77,7 +86,8 @@ def test_lwgan(steps = 120):
 
     # Inference:
     print('Inferencing...')
-    view = parse_view_params('R=0,90,0/t=0,0,0')
+    steps = conf['input']['steps']
+    view = parse_view_params(conf['input']['view'])
     delta = 360 / steps
     step_i = 0
     lwgan_outputs = []
@@ -100,24 +110,27 @@ def test_lwgan(steps = 120):
     print('Elapsed time:', elapsed, 'frames:', len(test_data), 'fps:', fps)
 
 
-def test_vibe_lwgan(steps = 120):
-    # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
-    result_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/t2'
+def test_vibe_lwgan(path_to_conf):
+    # Load configs:
+    conf = parse_conf(path_to_conf)
+    print('Config has been loaded from', path_to_conf)
 
     # Init VIBE-RT model:
-    vibe, vibe_args = init_vibe()
+    vibe, vibe_args = init_vibe(conf['vibe'])
 
     # Init LWGAN-RT model:
-    lwgan, lwgan_args = init_lwgan()
+    lwgan, lwgan_args = init_lwgan(conf['lwgan'])
 
     # Load test data:
     print('Loading test data...')
-    test_data = prepare_vibe_test_data(vibe_args.bbox_scale, vibe_args.crop_size)
+    test_data = prepare_vibe_test_data(conf['input'], conf['vibe'])
     print('Test data has been loaded:', len(test_data))
 
     # Inference:
     print('Inferencing...')
-    view = parse_view_params('R=0,90,0/t=0,0,0')
+    result_dir = conf['output']['result_dir']
+    steps = conf['input']['steps']
+    view = parse_view_params(conf['input']['view'])
     delta = 360 / steps
     step_i = 0
     start = time.time()
@@ -171,12 +184,12 @@ def test_vibe_lwgan(steps = 120):
 
 
 def main():
-    # test_vibe()
-    # test_lwgan()
-    test_vibe_lwgan()
+    # test_vibe(path_to_conf='conf/local/vibe_conf_local.yaml')
+    # test_lwgan(path_to_conf='conf/local/lwgan_conf_local.yaml')
+    test_vibe_lwgan(path_to_conf='conf/local/vibe_lwgan_conf_local.yaml')
 
     print('All done!')
-
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 if __name__ == '__main__':
     main()
