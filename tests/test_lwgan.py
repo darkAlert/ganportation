@@ -5,6 +5,7 @@ from lwganrt.options.test_options import TestOptions
 from lwganrt.utils.cv_utils import save_cv2_img
 from hlwgan import HoloLwganRT, parse_view_params
 from lwganrt.models.holoportator_rt import prepare_input as prepare_lwgan_input
+from conf.conf_parser import parse_conf
 import time
 
 
@@ -50,27 +51,27 @@ def load_data(frames_dir, smpls_dir, img_size):
     return data
 
 
-def init_lwgan(gpu_id='0'):
+def init_lwgan(conf):
     # Set params:
     args = TestOptions().parse()
-    args.gpu = gpu_id
-    args.gen_name = "holoportator"
-    args.image_size = 256
-    args.bg_ks = 11
-    args.ft_ks = 3
-    args.has_detector = False
-    args.post_tune = False
-    args.front_warp = False
-    args.save_res = False
-    args.n_threads_test = 4
-    args.load_path = '/home/darkalert/builds/impersonator/outputs/Holo_iPER/net_epoch_20_id_G.pth'
-    args.smpl_model = '/home/darkalert/builds/impersonator/assets/pretrains/smpl_model.pkl'
-    args.hmr_model = '/home/darkalert/builds/impersonator/assets/pretrains/hmr_tf2pt.pth'
-    args.smpl_faces = '/home/darkalert/builds/impersonator/assets/pretrains/smpl_faces.npy'
-    args.uv_mapping = '/home/darkalert/builds/impersonator/assets/pretrains/mapper.txt'
-    args.part_info = '/home/darkalert/builds/impersonator/assets/pretrains/smpl_part_info.json'
-    args.front_info = '/home/darkalert/builds/impersonator/assets/pretrains/front_facial.json'
-    args.head_info = '/home/darkalert/builds/impersonator/assets/pretrains/head.json'
+    args.gpu = conf['lwgan']['gpu']
+    args.gen_name = conf['lwgan']['gen_name']
+    args.image_size = conf['lwgan']['image_size']
+    args.bg_ks = conf['lwgan']['bg_ks']
+    args.ft_ks = conf['lwgan']['ft_ks']
+    args.has_detector = conf['lwgan']['has_detector']
+    args.post_tune = conf['lwgan']['post_tune']
+    args.front_warp = conf['lwgan']['front_warp']
+    args.save_res = conf['lwgan']['save_res']
+    args.n_threads_test = conf['lwgan']['n_threads_test']
+    args.load_path = conf['lwgan']['load_path']
+    args.smpl_model = conf['lwgan']['smpl_model']
+    args.hmr_model = conf['lwgan']['hmr_model']
+    args.smpl_faces = conf['lwgan']['smpl_faces']
+    args.uv_mapping = conf['lwgan']['uv_mapping']
+    args.part_info = conf['lwgan']['part_info']
+    args.front_info = conf['lwgan']['front_info']
+    args.head_info = conf['lwgan']['head_info']
 
     # Init LWGAN-RT model:
     print('Initializing LWGAN-RT...')
@@ -79,26 +80,27 @@ def init_lwgan(gpu_id='0'):
     return lwgan, args
 
 
-def main():
-    result_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/t1'
-    steps = 120
+def main(path_to_conf):
+    # Load config:
+    lwgan_conf = parse_conf(path_to_conf)
+    print ('Config has been loaded from', path_to_conf)
 
     # Init LWGAN-RT model:
-    lwgan, args = init_lwgan()
+    lwgan, args = init_lwgan(lwgan_conf)
 
     # Load test data:
-    frames_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/avatars'
-    smpls_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/smpls_by_vibe_aligned_lwgan'
-    scene_path = 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
-    frames_dir = os.path.join(frames_dir, scene_path)
-    smpls_dir = os.path.join(smpls_dir, scene_path)
+    target_path = lwgan_conf['input']['target_path']
+    frames_dir = os.path.join(lwgan_conf['input']['frames_dir'], target_path)
+    smpls_dir = os.path.join(lwgan_conf['input']['smpls_dir'], target_path)
     print('Loading test data...')
     test_data = load_data(frames_dir, smpls_dir, args.image_size)
     print('Test data has been loaded:', len(test_data))
 
     # Inference:
     print('Inferencing...')
-    view = parse_view_params('R=0,90,0/t=0,0,0')
+    result_dir = lwgan_conf['output']['result_dir']
+    steps = lwgan_conf['input']['steps']
+    view = parse_view_params(lwgan_conf['input']['view'])
     delta = 360 / steps
     step_i = 0
     results = []
@@ -133,4 +135,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(path_to_conf='conf/lwgan_conf_local.yaml')

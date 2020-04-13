@@ -1,11 +1,11 @@
 import os
 import argparse
-import torch
 import numpy as np
 import cv2
 from vibert.lib.data_utils.img_utils import get_single_image_crop_demo
 from vibert.holo.data_struct import DataStruct
 from hvibe import HoloVibeRT, convert_cam
+from conf.conf_parser import parse_conf
 import time
 
 
@@ -69,7 +69,7 @@ def load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, scale
     return data
 
 
-def init_vibe():
+def init_vibe(conf):
     # Init params:
     parser = argparse.ArgumentParser()
     parser.add_argument('--root_dir', type=str,
@@ -99,8 +99,8 @@ def init_vibe():
     args = parser.parse_args()
 
     # Set params:
-    args.seqlen = 1
-    args.root_dir = '/home/darkalert/builds/VibeRT/vibert/data/vibe_data'
+    args.seqlen = conf['vibe']['seqlen']
+    args.root_dir = conf['vibe']['root_dir']
     args.spin_model_path = os.path.join(args.root_dir, args.spin_model_path)
     args.smpl_model_dir = os.path.join(args.root_dir, args.smpl_model_dir)
     args.smpl_mean_path = os.path.join(args.root_dir, args.smpl_mean_path)
@@ -115,23 +115,26 @@ def init_vibe():
     return vibe, args
 
 
-def main():
-    result_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/smpls_by_vibe-rt'
+def main(path_to_conf):
+    # Load config:
+    vibe_conf = parse_conf(path_to_conf)
+    print ('Config has been loaded from', path_to_conf)
 
     # Init VIBE-RT model:
-    vibe, args = init_vibe()
+    vibe, args = init_vibe(vibe_conf)
 
     # Load test data:
     print('Loading test data...')
-    frames_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/frames'
-    yolo_bboxes_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/bboxes_by_maskrcnn'
-    avatar_bboxes_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/bboxes'
-    target_path = 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
+    frames_dir = vibe_conf['input']['frames_dir']
+    yolo_bboxes_dir = vibe_conf['input']['yolo_bboxes_dir']
+    avatar_bboxes_dir = vibe_conf['input']['avatar_bboxes_dir']
+    target_path = vibe_conf['input']['target_path']
     test_data = load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, args.bbox_scale, args.crop_size)
     print('Test data has been loaded:', len(test_data))
 
     # Inference:
     print('Inferencing...')
+    result_dir = vibe_conf['output']['result_dir']
     start = time.time()
 
     for data in test_data:
@@ -188,4 +191,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(path_to_conf='conf/vibe_conf_local.yaml')

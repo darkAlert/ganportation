@@ -11,7 +11,7 @@ RUN set -xue ;\
         unzip \
         python3-pip \
     ;\
-    apt-get clean
+    rm -rf /var/lib/apt/lists/*
 
 # set a directory for the app
 WORKDIR /usr/src/app

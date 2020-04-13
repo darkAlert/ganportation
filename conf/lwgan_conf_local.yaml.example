@@ -1,0 +1,42 @@
+lwgan:
+  gpu: '0'
+  gen_name: "holoportator"
+  image_size: 256
+  bg_ks: 11
+  ft_ks: 3
+  has_detector: False
+  post_tune: False
+  front_warp: False
+  save_res: False
+  n_threads_test: 4
+  load_path: '/home/username/builds/impersonator/outputs/Holo_iPER/net_epoch_20_id_G.pth'
+  smpl_model: '/home/username/builds/impersonator/assets/pretrains/smpl_model.pkl'
+  hmr_model: '/home/username/builds/impersonator/assets/pretrains/hmr_tf2pt.pth'
+  smpl_faces: '/home/username/builds/impersonator/assets/pretrains/smpl_faces.npy'
+  uv_mapping: '/home/username/builds/impersonator/assets/pretrains/mapper.txt'
+  part_info: '/home/username/builds/impersonator/assets/pretrains/smpl_part_info.json'
+  front_info: '/home/username/builds/impersonator/assets/pretrains/front_facial.json'
+  head_info: '/home/username/builds/impersonator/assets/pretrains/head.json'
+
+input:
+  frames_dir: '/home/username/HoloVideo/Data/avatars'
+  smpls_dir: '/home/username/HoloVideo/Data/smpls_by_vibe_aligned_lwgan'
+  target_path: 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
+  view: 'R=0,90,0/t=0,0,0'
+  steps: 120
+
+output:
+  result_dir: '/home/username/HoloVideo/Data/test/rt/t1'
+
+
+
+
+
+
+
+
+
+
+
+
+
