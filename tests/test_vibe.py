@@ -1,12 +1,16 @@
+import sys
 import os
 import argparse
 import numpy as np
 import cv2
+import time
 from vibert.lib.data_utils.img_utils import get_single_image_crop_demo
 from vibert.holo.data_struct import DataStruct
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from hvibe import HoloVibeRT, convert_cam
 from conf.conf_parser import parse_conf
-import time
+
 
 
 def load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, scale=1.1, crop_size=224):
@@ -191,4 +195,9 @@ def main(path_to_conf):
 
 
 if __name__ == '__main__':
-    main(path_to_conf='conf/local/vibe_conf_local.yaml')
+    path_to_conf = 'conf/local/vibe_conf_local.yaml'
+    if len(sys.argv) > 1:
+        path_to_conf = sys.argv[1]
+        sys.argv = [sys.argv[0]]
+
+    main(path_to_conf=path_to_conf)
