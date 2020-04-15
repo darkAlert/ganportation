@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
+FROM nvidia/cuda:10.1-cudnn7-runtime-ubuntu18.04
 
 ENV DEBIAN_FRONTEND=noninteractive LANG=C TZ=UTC
 
@@ -37,7 +37,9 @@ RUN mkdir -p /usr/src/data ;\
     rm /usr/src/data/holovideo.tar.gz
 
 # install pytorch and torchvision with cuda10:
-RUN pip3 install torch==1.4.0+cu100 torchvision==0.5.0+cu100 -f https://download.pytorch.org/whl/torch_stable.html
+RUN pip3 install \
+    https://download.pytorch.org/whl/cu101/torch-1.4.0-cp36-cp36m-linux_x86_64.whl \
+    https://download.pytorch.org/whl/cu101/torchvision-0.5.0-cp36-cp36m-linux_x86_64.whl
 
 # copy all files to the container
 WORKDIR /usr/src/app
@@ -59,4 +61,3 @@ RUN mkdir -p /usr/src/app/outputs
 
 # run the command
 CMD ["python3"]
-#ENTRYPOINT ["python3", "tests/test_vibe.py", "conf/azure/vibe_conf_azure.yaml"]
