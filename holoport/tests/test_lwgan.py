@@ -3,9 +3,9 @@ import numpy as np
 import cv2
 from lwganrt.options.test_options import TestOptions
 from lwganrt.utils.cv_utils import save_cv2_img
-from hlwgan import HoloLwganRT, parse_view_params
 from lwganrt.models.holoportator_rt import prepare_input as prepare_lwgan_input
-from conf.conf_parser import parse_conf
+from holoport.hlwgan import HoloLwganRT, parse_view_params
+from holoport.conf.conf_parser import parse_conf
 import time
 
 
@@ -135,4 +135,4 @@ def main(path_to_conf):
 
 
 if __name__ == '__main__':
-    main(path_to_conf='conf/local/lwgan_conf_local.yaml')
+    main(path_to_conf='holoport/conf/local/lwgan_conf_local.yaml')

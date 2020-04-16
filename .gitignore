@@ -5,4 +5,7 @@
 *.tar
 *.weights
 *thirdparty
-conf/local
+holoport/conf/local
+*build
+*dist
+*vibert.egg-info

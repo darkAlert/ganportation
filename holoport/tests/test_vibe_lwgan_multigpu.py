@@ -1,15 +1,14 @@
 import os
 import time
 import numpy as np
-from tests.test_vibe import load_data as load_vibe_data
-from tests.test_vibe import init_vibe
-from tests.test_lwgan import load_data as load_lwgan_data
-from tests.test_lwgan import init_lwgan
-from hvibe import convert_cam
-from hlwgan import parse_view_params
 from lwganrt.models.holoportator_rt import prepare_input as prepare_lwgan_input
 from lwganrt.utils.cv_utils import save_cv2_img
-from conf.conf_parser import parse_conf
+from holoport.tests.test_vibe import load_data as load_vibe_data
+from holoport.tests.test_lwgan import load_data as load_lwgan_data
+from holoport.tests.test_lwgan import init_lwgan
+from holoport.hvibe import init_vibe, convert_cam
+from holoport.hlwgan import parse_view_params
+from holoport.conf.conf_parser import parse_conf
 
 
 def prepare_vibe_test_data(conf_input, conf_vibe):

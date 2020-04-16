@@ -13,7 +13,7 @@ def parse_conf(path_to_yaml):
 
 
 def main():
-    vibe_conf = parse_conf('conf/vibe_conf_local.yaml')
+    vibe_conf = parse_conf('holoport/conf/vibe_conf_local.yaml')
 
 
 if __name__ == '__main__':

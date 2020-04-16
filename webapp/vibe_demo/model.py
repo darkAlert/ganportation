@@ -1,19 +1,16 @@
-import os
 import cv2
 import time
-import sys
 import numpy as np
 from vibert.lib.data_utils.img_utils import get_single_image_crop_demo
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from hvibe import init_vibe, convert_cam
-from conf.conf_parser import parse_conf
+from holoport.hvibe import init_vibe, convert_cam
+from holoport.conf.conf_parser import parse_conf
 
 
 class ExampleModel(object):
     SENDS_VIDEO = True
     SENDS_DATA = True
 
-    def __init__(self, connector, label=None, path_to_conf='conf/azure/vibe_conf_azure.yaml'):
+    def __init__(self, connector, label=None, path_to_conf='vibe_conf_azure.yaml'):
         # Load config:
         conf = parse_conf(path_to_conf)
         print('Config has been loaded from', path_to_conf)
