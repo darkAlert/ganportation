@@ -20,8 +20,10 @@ cd holoportrt
 git submodule update --init --recursive
 
 # build
+printf 'Bulding...\n'
 docker build -t ${img_name} .
 
 # test
+printf 'Testing...\n'
 test_cmd='python3 holoport/tests/test_vibe.py holoport/conf/azure/vibe_conf_azure.yaml'
-docker run --gpus all --rm --ipc=host -it ${img_name} ${test_cmd}
+docker run --gpus all --rm --ipc=host ${img_name} ${test_cmd}
