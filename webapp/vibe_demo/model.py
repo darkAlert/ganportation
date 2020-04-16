@@ -7,6 +7,7 @@ from holoport.conf.conf_parser import parse_conf
 
 
 class ExampleModel(object):
+    LABEL = ['vibe_demo']
     SENDS_VIDEO = True
     SENDS_DATA = True
 
