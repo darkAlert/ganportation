@@ -49,6 +49,9 @@ COPY . .
 RUN pip3 install --upgrade --no-cache-dir -r requirements.txt ;\
     pip3 install --upgrade --no-cache-dir -r thirdparty/vibe/requirements.txt
 
+# install HOLOPORT-RT
+RUN python3 setup.py install
+
 # install VIBE-RT
 WORKDIR /usr/src/app/thirdparty/vibe
 RUN python3 setup.py install
