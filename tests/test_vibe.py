@@ -1,6 +1,5 @@
 import sys
 import os
-import argparse
 import numpy as np
 import cv2
 import time
@@ -8,9 +7,8 @@ from vibert.lib.data_utils.img_utils import get_single_image_crop_demo
 from vibert.holo.data_struct import DataStruct
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from hvibe import HoloVibeRT, convert_cam
+from hvibe import init_vibe, convert_cam
 from conf.conf_parser import parse_conf
-
 
 
 def load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, scale=1.1, crop_size=224):
@@ -71,52 +69,6 @@ def load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, scale
         })
 
     return data
-
-
-def init_vibe(vibe_conf):
-    # Init params:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--root_dir', type=str,
-                        default=os.path.dirname(os.path.realpath(__file__)),
-                        help='repo root dir')
-    parser.add_argument('--smpl_model_dir', type=str,
-                        default='',
-                        help='dir the containing SMPL model')
-    parser.add_argument('--smpl_mean_path', type=str,
-                        default='smpl_mean_params.npz',
-                        help='path to SMPL mean params file')
-    parser.add_argument('--j_regressor_path', type=str,
-                        default='J_regressor_extra.npy',
-                        help='path to Joint regressor model')
-    parser.add_argument('--spin_model_path', type=str,
-                        default='spin_model_checkpoint.pth.tar',
-                        help='path to spin model')
-    parser.add_argument('--vibe_model_path', type=str,
-                        default='vibe_model_wo_3dpw.pth.tar',
-                        help='path to pretrained VIBE model')
-    parser.add_argument('--seqlen', type=int, default=16,
-                        help='VIBE sequence length')
-    parser.add_argument('--bbox_scale', type=float, default=1.1,
-                        help='scale for input bounding box')
-    parser.add_argument('--crop_size', type=int, default=224,
-                        help='crop size for input image')
-    args = parser.parse_args()
-
-    # Set params:
-    args.seqlen = vibe_conf['seqlen']
-    args.root_dir = vibe_conf['root_dir']
-    args.spin_model_path = os.path.join(args.root_dir, args.spin_model_path)
-    args.smpl_model_dir = os.path.join(args.root_dir, args.smpl_model_dir)
-    args.smpl_mean_path = os.path.join(args.root_dir, args.smpl_mean_path)
-    args.j_regressor_path = os.path.join(args.root_dir, args.j_regressor_path)
-    args.vibe_model_path = os.path.join(args.root_dir, args.vibe_model_path)
-
-    # Init vibe:
-    print('Initializing VIBE...')
-    vibe = HoloVibeRT(args)
-    print('Loaded pretrained VIBE weights from', args.vibe_model_path)
-
-    return vibe, args
 
 
 def main(path_to_conf):
