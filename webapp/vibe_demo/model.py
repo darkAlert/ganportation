@@ -6,7 +6,7 @@ from holoport.hvibe import init_vibe, convert_cam
 from holoport.conf.conf_parser import parse_conf
 
 
-class ExampleModel(object):
+class VibeModel(object):
     LABEL = ['vibe_demo']
     SENDS_VIDEO = True
     SENDS_DATA = True
