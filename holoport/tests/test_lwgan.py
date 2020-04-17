@@ -1,12 +1,11 @@
 import os
 import numpy as np
 import cv2
-from lwganrt.options.test_options import TestOptions
+import time
 from lwganrt.utils.cv_utils import save_cv2_img
 from lwganrt.models.holoportator_rt import prepare_input as prepare_lwgan_input
-from holoport.hlwgan import HoloLwganRT, parse_view_params
+from holoport.hlwgan import init_lwgan, parse_view_params
 from holoport.conf.conf_parser import parse_conf
-import time
 
 
 def get_file_paths(path, exts=('.jpeg','.jpg','.png')):
@@ -49,35 +48,6 @@ def load_data(frames_dir, smpls_dir, img_size):
         data.append({'lwgan_input': prep_img, 'smpl': prep_smpl})
 
     return data
-
-
-def init_lwgan(lwgan_conf):
-    # Set params:
-    args = TestOptions().parse()
-    args.gpu = lwgan_conf['gpu']
-    args.gen_name = lwgan_conf['gen_name']
-    args.image_size = lwgan_conf['image_size']
-    args.bg_ks = lwgan_conf['bg_ks']
-    args.ft_ks = lwgan_conf['ft_ks']
-    args.has_detector = lwgan_conf['has_detector']
-    args.post_tune = lwgan_conf['post_tune']
-    args.front_warp = lwgan_conf['front_warp']
-    args.save_res = lwgan_conf['save_res']
-    args.n_threads_test = lwgan_conf['n_threads_test']
-    args.load_path = lwgan_conf['load_path']
-    args.smpl_model = lwgan_conf['smpl_model']
-    args.hmr_model = lwgan_conf['hmr_model']
-    args.smpl_faces = lwgan_conf['smpl_faces']
-    args.uv_mapping = lwgan_conf['uv_mapping']
-    args.part_info = lwgan_conf['part_info']
-    args.front_info = lwgan_conf['front_info']
-    args.head_info = lwgan_conf['head_info']
-
-    # Init LWGAN-RT model:
-    print('Initializing LWGAN-RT...')
-    lwgan = HoloLwganRT(args)
-
-    return lwgan, args
 
 
 def main(path_to_conf):
