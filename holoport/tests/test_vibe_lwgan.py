@@ -187,9 +187,11 @@ def test_init():
     conf = parse_conf('holoport/conf/local/vibe_lwgan_conf_local.yaml')
 
     # Init VIBE-RT model:
-    vibe, vibe_args = init_vibe(conf['vibe'])
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    # vibe, vibe_args = init_vibe(conf['vibe'])
 
     # Init LWGAN-RT model:
+    conf['lwgan']['gpu_ids'] = '1'
     lwgan, lwgan_args = init_lwgan(conf['lwgan'])
 
     time.sleep(3)

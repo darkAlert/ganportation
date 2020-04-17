@@ -1,5 +1,5 @@
 lwgan:
-  gpu: '0'
+  gpu_ids: '0'
   gen_name: "holoportator"
   image_size: 256
   bg_ks: 11
