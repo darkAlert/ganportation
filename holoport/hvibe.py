@@ -89,7 +89,7 @@ def init_vibe(vibe_conf):
                         help='scale for input bounding box')
     parser.add_argument('--crop_size', type=int, default=224,
                         help='crop size for input image')
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
 
     # Set params:
     args.seqlen = vibe_conf['seqlen']

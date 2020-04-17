@@ -44,6 +44,7 @@ def parse_view_params(view_params):
 def init_lwgan(lwgan_conf):
     # Set params:
     args = TestOptions().parse()
+
     args.gpu = lwgan_conf['gpu']
     args.gen_name = lwgan_conf['gen_name']
     args.image_size = lwgan_conf['image_size']
