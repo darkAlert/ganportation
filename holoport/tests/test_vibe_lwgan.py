@@ -76,11 +76,12 @@ def test_lwgan(path_to_conf):
     print ('Config has been loaded from', path_to_conf)
 
     # Init LWGAN-RT model:
+    conf['lwgan']['gpu_ids'] = '1'
     lwgan, args = init_lwgan(conf['lwgan'])
 
     # Load test data:
     print('Loading lwgan test data...')
-    test_data = prepare_lwgan_test_data(args.image_size)
+    test_data = prepare_lwgan_test_data(conf)
     print('Test data has been loaded:', len(test_data))
 
     # Inference:
@@ -118,6 +119,7 @@ def test_vibe_lwgan(path_to_conf):
     vibe, vibe_args = init_vibe(conf['vibe'])
 
     # Init LWGAN-RT model:
+    conf['lwgan']['gpu_ids'] = '1'
     lwgan, lwgan_args = init_lwgan(conf['lwgan'])
 
     # Load test data:
@@ -187,12 +189,13 @@ def test_init():
     conf = parse_conf('holoport/conf/local/vibe_lwgan_conf_local.yaml')
 
     # Init VIBE-RT model:
-    # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-    # vibe, vibe_args = init_vibe(conf['vibe'])
+    #os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    vibe, vibe_args = init_vibe(conf['vibe'])
 
     # Init LWGAN-RT model:
     conf['lwgan']['gpu_ids'] = '1'
     lwgan, lwgan_args = init_lwgan(conf['lwgan'])
+
 
     time.sleep(3)
 
@@ -201,9 +204,9 @@ def test_init():
 
 def main():
     # test_vibe(path_to_conf='holoport/conf/local/vibe_conf_local.yaml')
-    # test_lwgan(path_to_conf='holoport/conf/local/lwgan_conf_local.yaml')
+    test_lwgan(path_to_conf='holoport/conf/local/lwgan_conf_local.yaml')
     # test_vibe_lwgan(path_to_conf='holoport/conf/local/vibe_lwgan_conf_local.yaml')
-    test_init()
+    # test_init()
 
     print('All done!')
     # os.environ['CUDA_VISIBLE_DEVICES'] = '1'

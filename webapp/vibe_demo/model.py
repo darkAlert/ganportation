@@ -34,7 +34,7 @@ class VibeModel(object):
         for frame in self.connector.frames():
             # Preprocess input data:
             img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            norm_img, _, _ = get_single_image_crop_demo(img, self.dummy_yolo_cbboxes,
+            norm_img, _, _ = get_single_image_crop_demo(img, self.dummy_yolo_cbboxes[0],
                                                         kp_2d=None,
                                                         scale=self.args.bbox_scale,
                                                         crop_size=self.args.crop_size)

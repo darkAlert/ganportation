@@ -6,7 +6,8 @@ from lwganrt.options.test_options import TestOptions
 
 class HoloLwganRT:
     def __init__(self, args):
-        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        assert torch.cuda.is_available()
+        self.device = torch.device('cuda:' + str(args.gpu_ids))
         self.holoport_model = HoloportatorRT(args, device=self.device)
 
     def inference(self, frame, smpl, view):
@@ -43,7 +44,7 @@ def parse_view_params(view_params):
 
 def init_lwgan(lwgan_conf):
     # Set params:
-    args = TestOptions().parse(lwgan_conf)
+    args = TestOptions().parse(lwgan_conf, set_cuda_env=False)
 
     # Init LWGAN-RT model:
     print('Initializing LWGAN-RT...')
