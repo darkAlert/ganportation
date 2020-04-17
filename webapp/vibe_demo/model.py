@@ -1,3 +1,4 @@
+import os
 import cv2
 import time
 import numpy as np
@@ -14,6 +15,7 @@ class VibeModel(object):
     def __init__(self, connector, label=None, path_to_conf='vibe_conf_azure.yaml'):
         # Load config:
         conf = parse_conf(path_to_conf)
+        path_to_conf = os.path.join(os.path.dirname(__file__), path_to_conf)
         print('Config has been loaded from', path_to_conf)
 
         # Init VIBE-RT model:
