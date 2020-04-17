@@ -14,8 +14,8 @@ class VibeModel(object):
 
     def __init__(self, connector, label=None, path_to_conf='vibe_conf_azure.yaml'):
         # Load config:
-        conf = parse_conf(path_to_conf)
         path_to_conf = os.path.join(os.path.dirname(__file__), path_to_conf)
+        conf = parse_conf(path_to_conf)
         print('Config has been loaded from', path_to_conf)
 
         # Init VIBE-RT model:
@@ -36,7 +36,7 @@ class VibeModel(object):
             img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             norm_img, _, _ = get_single_image_crop_demo(img, self.dummy_yolo_cbboxes,
                                                         kp_2d=None,
-                                                        scale=self.args.scale,
+                                                        scale=self.args.bbox_scale,
                                                         crop_size=self.args.crop_size)
             data = {
                 'vibe_input': norm_img.unsqueeze(0),
