@@ -31,7 +31,11 @@ class VibeModel(object):
 
 
     def run(self):
+        self.connector.logger.info("VIBE: RUN")
+
         for frame in self.connector.frames():
+            self.connector.logger.info("VIBE: Input frame:", frame.shape)
+
             # Preprocess input data:
             img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             norm_img, _, _ = get_single_image_crop_demo(img, self.dummy_yolo_cbboxes[0],
@@ -80,3 +84,5 @@ class VibeModel(object):
             cv2.putText(img, text, (5, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 2)
             self.connector.send_frame(img)
             self.finished = time.time()
+
+            self.connector.logger.info("VIBE: iter end")
