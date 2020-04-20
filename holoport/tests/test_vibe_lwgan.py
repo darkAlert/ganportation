@@ -78,6 +78,8 @@ def test_lwgan(path_to_conf):
     # Init LWGAN-RT model:
     conf['lwgan']['gpu_ids'] = '1'
     lwgan, args = init_lwgan(conf['lwgan'])
+    # time.sleep(3)
+    # assert False
 
     # Load test data:
     print('Loading lwgan test data...')
