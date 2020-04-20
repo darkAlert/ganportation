@@ -5,7 +5,7 @@ from lwganrt.options.test_options import TestOptions
 
 
 class HoloLwganRT:
-    def __init__(self, args):
+    def __init__(self, args, warmup=True):
         assert torch.cuda.is_available()
         self.device = torch.device('cuda:' + str(args.gpu_ids))
         self.holoport_model = HoloportatorRT(args, device=self.device)

@@ -10,7 +10,6 @@ from holoport.hvibe import init_vibe, convert_cam
 from holoport.hlwgan import parse_view_params
 from holoport.conf.conf_parser import parse_conf
 
-
 def prepare_vibe_test_data(conf_input, conf_vibe):
     frames_dir = conf_input['frames_dir']
     yolo_bboxes_dir = conf_input['yolo_bboxes_dir']
@@ -76,10 +75,8 @@ def test_lwgan(path_to_conf):
     print ('Config has been loaded from', path_to_conf)
 
     # Init LWGAN-RT model:
-    conf['lwgan']['gpu_ids'] = '1'
+    conf['lwgan']['gpu_ids'] = '0'
     lwgan, args = init_lwgan(conf['lwgan'])
-    # time.sleep(3)
-    # assert False
 
     # Load test data:
     print('Loading lwgan test data...')
@@ -118,10 +115,11 @@ def test_vibe_lwgan(path_to_conf):
     print('Config has been loaded from', path_to_conf)
 
     # Init VIBE-RT model:
+    conf['vibe']['gpu_id'] = '1'
     vibe, vibe_args = init_vibe(conf['vibe'])
 
     # Init LWGAN-RT model:
-    conf['lwgan']['gpu_ids'] = '1'
+    conf['lwgan']['gpu_ids'] = '0'
     lwgan, lwgan_args = init_lwgan(conf['lwgan'])
 
     # Load test data:
@@ -191,7 +189,7 @@ def test_init():
     conf = parse_conf('holoport/conf/local/vibe_lwgan_conf_local.yaml')
 
     # Init VIBE-RT model:
-    #os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
     vibe, vibe_args = init_vibe(conf['vibe'])
 
     # Init LWGAN-RT model:
@@ -206,8 +204,8 @@ def test_init():
 
 def main():
     # test_vibe(path_to_conf='holoport/conf/local/vibe_conf_local.yaml')
-    test_lwgan(path_to_conf='holoport/conf/local/lwgan_conf_local.yaml')
-    # test_vibe_lwgan(path_to_conf='holoport/conf/local/vibe_lwgan_conf_local.yaml')
+    # test_lwgan(path_to_conf='holoport/conf/local/lwgan_conf_local.yaml')
+    test_vibe_lwgan(path_to_conf='holoport/conf/local/vibe_lwgan_conf_local.yaml')
     # test_init()
 
     print('All done!')

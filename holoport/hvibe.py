@@ -9,7 +9,7 @@ class HoloVibeRT():
     def __init__(self, args):
         self.bbox_scale = args.bbox_scale
         self.crop_size = args.crop_size
-        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        self.device = torch.device('cuda:' + str(args.gpu_id))
 
         # Init VIBE-RT:
         self.vibe_model = VibeRT(seqlen=args.seqlen,
@@ -99,6 +99,7 @@ def init_vibe(vibe_conf):
     args.smpl_mean_path = os.path.join(args.root_dir, args.smpl_mean_path)
     args.j_regressor_path = os.path.join(args.root_dir, args.j_regressor_path)
     args.vibe_model_path = os.path.join(args.root_dir, args.vibe_model_path)
+    args.gpu_id = vibe_conf['gpu_id']
 
     # Init vibe:
     print('Initializing VIBE...')
