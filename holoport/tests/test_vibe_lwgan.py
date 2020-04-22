@@ -115,11 +115,11 @@ def test_vibe_lwgan(path_to_conf):
     print('Config has been loaded from', path_to_conf)
 
     # Init VIBE-RT model:
-    conf['vibe']['gpu_id'] = '1'
+    conf['vibe']['gpu_id'] = '0'
     vibe, vibe_args = init_vibe(conf['vibe'])
 
     # Init LWGAN-RT model:
-    conf['lwgan']['gpu_ids'] = '0'
+    conf['lwgan']['gpu_ids'] = '1'
     lwgan, lwgan_args = init_lwgan(conf['lwgan'])
 
     # Load test data:
