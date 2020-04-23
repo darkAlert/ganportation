@@ -42,7 +42,7 @@ class HoloYoloRT():
                 frame = frame.unsqueeze(0)
             frame = frame.to(self.device)
 
-            if self.half:
+            if self.half and frame.dtype != torch.half:
                 frame = frame.half()
 
             # Inference
@@ -77,7 +77,7 @@ def prepare_yolo_input(img, img_size):
     # To tensor:
     img = torch.from_numpy(img)
     img = img.float()
-    # img = img.half() if half else img.float()  # uint8 to fp16/32
+
     img /= 255.0  # 0 - 255 to 0.0 - 1.0
     if img.ndimension() == 3:
         img = img.unsqueeze(0)
