@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 import cv2
 import time
@@ -50,7 +51,7 @@ def load_data(frames_dir, smpls_dir, img_size):
     return data
 
 
-def main(path_to_conf):
+def test(path_to_conf, save_results=False):
     # Load config:
     conf = parse_conf(path_to_conf)
     print ('Config has been loaded from', path_to_conf)
@@ -68,7 +69,6 @@ def main(path_to_conf):
 
     # Inference:
     print('Inferencing...')
-    result_dir = conf['output']['result_dir']
     steps = conf['input']['steps']
     view = parse_view_params(conf['input']['view'])
     delta = 360 / steps
@@ -90,9 +90,12 @@ def main(path_to_conf):
 
     elapsed = time.time() - start
     fps = len(test_data) / elapsed
-    print('Elapsed time:', elapsed, 'frames:', len(test_data), 'fps:', fps)
+    spf = elapsed / len(test_data)  # secons per frame
+    print('###Elapsed time:', elapsed, 'frames:', len(test_data), 'fps:', fps, 'spf:', spf)
 
-    if result_dir is not None:
+    # Save the results:
+    result_dir = conf['output']['result_dir']
+    if save_results and result_dir is not None:
         print ('Saving the results to', result_dir)
         if not os.path.exists(result_dir):
             os.makedirs(result_dir)
@@ -103,6 +106,10 @@ def main(path_to_conf):
     print ('All done!')
 
 
-
 if __name__ == '__main__':
-    main(path_to_conf='holoport/conf/local/lwgan_conf_local.yaml')
+    path_to_conf = 'holoport/conf/local/lwgan_conf_local.yaml'
+    if len(sys.argv) > 1:
+        path_to_conf = sys.argv[1]
+        sys.argv = [sys.argv[0]]
+
+    test(path_to_conf, save_results=True)

@@ -69,7 +69,7 @@ def load_data(frames_dir, yolo_bboxes_dir, avatar_bboxes_dir, target_path, scale
     return data
 
 
-def main(path_to_conf):
+def test(path_to_conf, save_results=False):
     # Load config:
     conf = parse_conf(path_to_conf)
     print ('Config has been loaded from', path_to_conf)
@@ -89,7 +89,6 @@ def main(path_to_conf):
 
     # Inference:
     print('Inferencing...')
-    result_dir = conf['output']['result_dir']
     start = time.time()
 
     for data in test_data:
@@ -109,10 +108,12 @@ def main(path_to_conf):
 
     elapsed = time.time() - start
     fps = len(test_data) / elapsed
-    print('Elapsed time:', elapsed, 'frames:', len(test_data), 'fps:', fps)
+    spf = elapsed / len(test_data)  # secons per frame
+    print('###Elapsed time:', elapsed, 'frames:', len(test_data), 'fps:', fps, 'spf:', spf)
 
     # Save the results:
-    if result_dir is not None:
+    result_dir = conf['output']['result_dir']
+    if save_results and result_dir is not None:
         pose, betas, rotmat, avatar_cam, frame_paths = [], [], [], [], []
 
         # Merge outputs:
@@ -151,4 +152,4 @@ if __name__ == '__main__':
         path_to_conf = sys.argv[1]
         sys.argv = [sys.argv[0]]
 
-    main(path_to_conf=path_to_conf)
+    test(path_to_conf, save_results=True)

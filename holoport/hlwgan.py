@@ -44,7 +44,7 @@ def parse_view_params(view_params):
 
 def init_lwgan(lwgan_conf):
     # Set params:
-    args = TestOptions().parse(lwgan_conf, set_cuda_env=False)
+    args = TestOptions().parse(lwgan_conf, set_cuda_env=False, verbose=False)
 
     # Init LWGAN-RT model:
     print('Initializing LWGAN-RT...')
