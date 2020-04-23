@@ -7,7 +7,7 @@ from yolort.utils.datasets import letterbox
 
 
 class HoloYoloRT():
-    def __init__(self, args):
+    def __init__(self, args, warmup=True):
         self.device = torch.device('cuda:' + str(args.yolo_gpu_id))
         self.half = args.yolo_half
         self.img_size = args.yolo_img_size
@@ -29,8 +29,10 @@ class HoloYoloRT():
         self.names = load_classes(args.yolo_names)
 
         # Warm up:
-        with torch.no_grad():
-            _ = self.yolo_model(torch.zeros((1, 3, self.img_size, self.img_size), device=self.device))
+        if warmup:
+            with torch.no_grad():
+                dummy = torch.zeros((1, 3, self.img_size, self.img_size), device=self.device)
+                _ = self.yolo_model(dummy.half() if self.half else dummy.float())
 
 
     def inference(self, frame):
@@ -39,6 +41,9 @@ class HoloYoloRT():
             if frame.ndimension() == 3:
                 frame = frame.unsqueeze(0)
             frame = frame.to(self.device)
+
+            if self.half:
+                frame = frame.half()
 
             # Inference
             pred = self.yolo_model(frame, augment=False)[0]
@@ -61,7 +66,7 @@ class HoloYoloRT():
             }
 
 
-def prepare_yolo_input(img, img_size, half=False):
+def prepare_yolo_input(img, img_size):
     # Padded resize:
     img = letterbox(img, new_shape=img_size)[0]
 
@@ -71,7 +76,8 @@ def prepare_yolo_input(img, img_size, half=False):
 
     # To tensor:
     img = torch.from_numpy(img)
-    img = img.half() if half else img.float()  # uint8 to fp16/32
+    img = img.float()
+    # img = img.half() if half else img.float()  # uint8 to fp16/32
     img /= 255.0  # 0 - 255 to 0.0 - 1.0
     if img.ndimension() == 3:
         img = img.unsqueeze(0)
@@ -101,6 +107,8 @@ def init_yolo(yolo_conf):
     args.yolo_weights = yolo_conf['weights_path']
     args.yolo_gpu_id = yolo_conf['gpu_id']
     args.yolo_img_size = yolo_conf['img_size']
+    if 'half' in yolo_conf:
+        args.yolo_half = yolo_conf['half']
 
     # Init vibe:
     print('Initializing YOLOv3...')

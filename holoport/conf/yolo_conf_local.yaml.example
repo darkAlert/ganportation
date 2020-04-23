@@ -4,6 +4,7 @@ yolo:
   names_path: '/home/username/builds/yolov3/yolort/data/coco.names'
   img_size: 512
   gpu_id: '0'
+  half: False
 
 input:
   frames_dir: '/home/username/HoloVideo/Data/frames'

@@ -44,8 +44,7 @@ def main(path_to_conf):
     # Load test data:
     print('Loading test data...')
     frames_dir = os.path.join(conf['input']['frames_dir'], conf['input']['target_path'])
-    img_size = conf['yolo']['img_size']
-    test_data = load_data(frames_dir, img_size)
+    test_data = load_data(frames_dir, args.yolo_img_size)
     print('Test data has been loaded:', len(test_data))
 
     # Inference:
@@ -64,8 +63,8 @@ def main(path_to_conf):
 
     # Save the results:
     result_dir = conf['output']['result_dir']
-    for idx, res in enumerate(results):
-        print ('{}: {}'.format(idx,res))
+    # for idx, res in enumerate(results):
+    #     print ('{}: {}'.format(idx,res))
 
     print ('All done!')
 
