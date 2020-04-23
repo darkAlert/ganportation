@@ -3,6 +3,7 @@ vibe:
   seqlen: 1
   scale: 1.1
   crop_size: 224
+  gpu_id: '0'
 
 input:
   frames_dir: '/home/username/HoloVideo/Data/frames'

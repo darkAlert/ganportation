@@ -28,7 +28,8 @@ class HoloVibeRT():
 
     def inference(self, frame):
         with torch.no_grad():
-            frame = frame.unsqueeze(0)
+            if frame.ndimension() == 3:
+                frame = frame.unsqueeze(0)
             frame = frame.to(self.device)
 
             preds = self.vibe_model(frame)[-1]

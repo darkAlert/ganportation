@@ -75,6 +75,7 @@ def main(path_to_conf):
     print ('Config has been loaded from', path_to_conf)
 
     # Init VIBE-RT model:
+    conf['vibe']['gpu_id'] = '0'
     vibe, args = init_vibe(conf['vibe'])
 
     # Load test data:
