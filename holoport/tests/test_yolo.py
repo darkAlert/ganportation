@@ -2,7 +2,7 @@ import sys
 import os
 import cv2
 import time
-from holoport.hyolo import init_yolo, prepare_yolo_input
+from holoport.hyolo import init_yolo, prepare_yolo_input, convert_yolo_output_to_bboxes
 from holoport.conf.conf_parser import parse_conf
 
 
@@ -26,8 +26,8 @@ def load_data(frames_dir, img_size):
     # Prepare data:
     data = []
     for img in images:
-        prep_img = prepare_yolo_input(img, img_size)
-        data.append({'yolo_input': prep_img})
+        prep_img = prepare_yolo_input(img.copy(), img_size)
+        data.append({'yolo_input': prep_img, 'origin_frame': img})
 
     return data
 
@@ -49,22 +49,39 @@ def main(path_to_conf):
 
     # Inference:
     print('Inferencing...')
-    results = []
     start = time.time()
 
     for data in test_data:
         output = yolo.inference(data['yolo_input'])
-        results.append(output)
+        data['yolo_output'] = output
 
     elapsed = time.time() - start
     fps = len(test_data) / elapsed
     spf = elapsed/len(test_data)  #secons per frame
     print('Elapsed time:', elapsed, 'frames:', len(test_data), 'fps:', fps, 'spf:', spf)
 
+    # Prepare output:
+    for data in test_data:
+        actual_size = [data['yolo_input'].shape[2:]]
+        origin_size = [data['origin_frame'].shape]
+        bboxes = convert_yolo_output_to_bboxes(data['yolo_output'], actual_size, origin_size)
+        data['yolo_bbox'] = bboxes[0] if len(bboxes) else None
+
     # Save the results:
     result_dir = conf['output']['result_dir']
-    # for idx, res in enumerate(results):
-    #     print ('{}: {}'.format(idx,res))
+    if result_dir is not None:
+        print ('Saving the results to', result_dir)
+        if not os.path.exists(result_dir):
+            os.makedirs(result_dir)
+
+        for idx, data in enumerate(test_data):
+            if data['yolo_bbox'] is not None:
+                pt1 = data['yolo_bbox'][0], data['yolo_bbox'][1]
+                pt2 = data['yolo_bbox'][2], data['yolo_bbox'][3]
+                img = cv2.rectangle(data['origin_frame'], pt1, pt2, color=(0,0,255))
+                out_path = os.path.join(result_dir, str(idx).zfill(5) + '.jpeg')
+                cv2.imwrite(out_path, img)
+            # print ('{}: {}'.format(idx,data['yolo_bbox']))
 
     print ('All done!')
 

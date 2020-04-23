@@ -37,9 +37,10 @@ class HoloYoloRT():
 
     def inference(self, frame):
         with torch.no_grad():
-            # Prepare input:
             if frame.ndimension() == 3:
                 frame = frame.unsqueeze(0)
+
+            # To GPU:
             frame = frame.to(self.device)
 
             if self.half and frame.dtype != torch.half:
@@ -55,15 +56,11 @@ class HoloYoloRT():
             pred = non_max_suppression(pred, self.conf_thres, self.iou_thres,
                                        multi_label=False, classes=self.classes, agnostic=self.agnostic_nms)
 
-            # Process detections
-            for i, det in enumerate(pred):  # detections per image
-                if det is not None and len(det):
-                    # Rescale boxes from img_size to the origin size
-                    det[:, :4] = scale_coords(frame.shape[2:], det[:, :4], frame.shape).round()
+            # To CPU:
+            for i in range(len(pred)):
+                pred[i] = pred[i].cpu()
 
-            return {
-                'bboxes': pred
-            }
+            return pred
 
 
 def prepare_yolo_input(img, img_size):
@@ -83,6 +80,34 @@ def prepare_yolo_input(img, img_size):
         img = img.unsqueeze(0)
 
     return img
+
+
+def convert_yolo_output_to_bboxes(pred, actual_size, origin_size, target_class=0):
+    assert len(pred) == len(actual_size) and len(pred) == len(origin_size)
+    bboxes = []
+
+    for det, size1, size0 in zip(pred, actual_size, origin_size):
+        bbox = None
+
+        if det is not None and len(det):
+            # Rescale boxes from img_size to the origin size
+            det[:, :4] = scale_coords(size1, det[:, :4], size0).round()
+
+            # Filter out all not humans:
+            persons = []
+            for i in range(det.shape[0]):
+                if int(det[i,5]) == target_class:
+                    persons.append(det[i])
+
+            #  Choose the preson with the largest bbox area:
+            if len(persons):
+                areas = [(p[2]-p[0])*(p[3]-p[1]) for p in persons]
+                max_id = max(enumerate(areas), key=lambda x: x[1])[0]
+                bbox = persons[max_id][:4]
+
+        bboxes.append(bbox)
+
+    return bboxes
 
 
 def init_yolo(yolo_conf):
