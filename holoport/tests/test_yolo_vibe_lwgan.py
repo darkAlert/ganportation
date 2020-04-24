@@ -25,11 +25,18 @@ def get_file_paths(path, exts=('.jpeg','.jpg','.png')):
     return file_paths
 
 
-def load_frames(frames_dir):
+def load_frames(frames_dir, max_frames=None):
     frames = []
     frame_paths = get_file_paths(frames_dir)
 
-    for path in frame_paths:
+    if max_frames is None:
+        max_frames = len(frame_paths)
+    if max_frames > len(frame_paths):
+        max_frames = len(frame_paths)
+
+    for idx, path in enumerate(frame_paths):
+        if idx >= max_frames:
+            break
         frames.append({'frame': cv2.imread(path,1)})
 
     return frames
@@ -143,7 +150,8 @@ def test_yolo_vibe_lwgan(path_to_conf, save_results=True):
     # Load test data:
     print('Loading test data...')
     frames_dir = os.path.join(conf['input']['frames_dir'], conf['input']['target_path'])
-    test_data = load_frames(frames_dir)
+    n = int(conf['input']['max_frames']) if 'max_frames' in conf['input'] else None
+    test_data = load_frames(frames_dir, max_frames=n)
     print('Test data has been loaded:', len(test_data))
 
     # Avatar view params:
@@ -153,7 +161,9 @@ def test_yolo_vibe_lwgan(path_to_conf, save_results=True):
     step_i = 0
 
     # Dummy scene params:
-    dummy_scene_bbox = np.array([[575, 150, 850, 850]], dtype=np.int64)
+    t = conf['input']['scene_bbox'].split(',')
+    assert len(t) == 4
+    dummy_scene_bbox = np.array([[int(t[0]), int(t[1]), int(t[2]), int(t[3])]], dtype=np.int64)
     dummy_scene_cbbox = dummy_scene_bbox.copy()
     dummy_scene_cbbox[:,0] = dummy_scene_bbox[:,0] + dummy_scene_bbox[:,2] * 0.5  # (x,y,w,h) -> (cx,cy,w,h)
     dummy_scene_cbbox[:,1] = dummy_scene_bbox[:,1] + dummy_scene_bbox[:,3] * 0.5
@@ -223,7 +233,7 @@ def main():
         print('==============Testing LWGAN==============')
         test_lwgan('holoport/conf/local/lwgan_conf_local.yaml', False)
 
-    test_yolo_vibe_lwgan('holoport/conf/local/yolo_vibe_lwgan_conf_local.yaml')
+    test_yolo_vibe_lwgan('holoport/conf/local/yolo_vibe_lwgan_conf_local_andrey_1.yaml')
 
 if __name__ == '__main__':
     main()
