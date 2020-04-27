@@ -26,7 +26,7 @@ def pre_yolo_by_worker(args, break_event, input_q, output_q, aux_params):
 
     while not break_event.is_set():
         try:
-            data = input_q.get(timeout=1)
+            data = input_q.get(timeout=0.005)
             input_q.task_done()
         except Empty:
             continue
@@ -59,7 +59,7 @@ def pre_vibe_by_worker(args, break_event, input_q, output_q):
 
     while not break_event.is_set():
         try:
-            data = input_q.get(timeout=1)
+            data = input_q.get(timeout=0.005)
             input_q.task_done()
         except Empty:
             continue
@@ -87,7 +87,7 @@ def pre_lwgan_by_worker(args, break_event, input_q, output_q):
 
     while not break_event.is_set():
         try:
-            data = input_q.get(timeout=1)
+            data = input_q.get(timeout=0.005)
             input_q.task_done()
         except Empty:
             continue
@@ -113,7 +113,7 @@ def postprocess_by_worker(break_event, input_q, output_q):
 
     while not break_event.is_set():
         try:
-            data = input_q.get(timeout=1)
+            data = input_q.get(timeout=0.005)
             input_q.task_done()
         except Empty:
             continue
@@ -136,7 +136,7 @@ def yolo_vibe_inference_by_worker(yolo, vibe, break_event, yolo_input_q, yolo_ou
 
     while not break_event.is_set():
         try:
-            data = yolo_input_q.get(timeout=1)
+            data = yolo_input_q.get(timeout=0.005)
             yolo_input_q.task_done()
 
             # YOLO inference:
@@ -146,7 +146,7 @@ def yolo_vibe_inference_by_worker(yolo, vibe, break_event, yolo_input_q, yolo_ou
             pass
 
         try:
-            data = vibe_input_q.get(timeout=1)
+            data = vibe_input_q.get(timeout=0.005)
             vibe_input_q.task_done()
 
             if 'not_found' in data:
@@ -168,7 +168,7 @@ def lwgan_inference_by_worker(lwgan, break_event, input_q, output_q):
 
     while not break_event.is_set():
         try:
-            data = input_q.get(timeout=1)
+            data = input_q.get(timeout=0.005)
             input_q.task_done()
         except Empty:
             continue
@@ -287,7 +287,7 @@ def test_yolo_vibe_lwgan_multithreads(path_to_conf, save_results=True):
             not lwgan_input_q.empty() or \
             not lwgan_output_q.empty():
         print ('{}/{}, yolo_in:{}, yolo_out:{}, vibe_in:{}, vibe_out:{}, lwgan_in:{}, lwgan_out:{}'.format(avatar_q.qsize(), len(test_data), yolo_input_q.qsize(), yolo_output_q.qsize(), vibe_input_q.qsize(), vibe_output_q.qsize(), lwgan_input_q.qsize(), lwgan_output_q.qsize()))
-        time.sleep(1)
+        time.sleep(0.1)
 
     # Stop workers:
     break_event.set()
