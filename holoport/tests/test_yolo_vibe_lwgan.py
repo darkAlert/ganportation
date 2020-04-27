@@ -171,6 +171,9 @@ def test_yolo_vibe_lwgan(path_to_conf, save_results=True):
     # Inference:
     print('Inferencing...')
     start = time.time()
+    pre_yolo_elapsed, post_yolo_elapsed = 0, 0
+    pre_vibe_elapsed, post_vibe_elapsed = 0, 0
+    pre_lwgan_elapsed, post_lwgan_elapsed = 0, 0
 
     for idx, data in enumerate(tqdm(test_data)):
         # Update avatar view:
@@ -180,9 +183,13 @@ def test_yolo_vibe_lwgan(path_to_conf, save_results=True):
         data['lwgan_input_view'] = view
 
         # YOLO:
+        t_start = time.time()
         data = pre_yolo(data, yolo_args)
+        pre_yolo_elapsed += time.time() - t_start
         data['yolo_output'] = yolo.inference(data['yolo_input'])
+        t_start = time.time()
         data = post_yolo(data)
+        post_yolo_elapsed += time.time() - t_start
 
         if data['yolo_cbbox'] is None:
             print ('Skip frame {}: person not found!'.format(idx))
@@ -193,25 +200,37 @@ def test_yolo_vibe_lwgan(path_to_conf, save_results=True):
         data['scene_cbbox'] = dummy_scene_cbbox
 
         # VIBE:
+        t_start = time.time()
         data = pre_vibe(data, vibe_args)
+        pre_vibe_elapsed += time.time() - t_start
         data['vibe_output'] = vibe.inference(data['vibe_input'])
+        t_start = time.time()
         data = post_vibe(data)
+        post_vibe_elapsed += time.time() - t_start
 
         # LWGAN:
+        t_start = time.time()
         data = pre_lwgan(data, lwgan_args)
+        pre_lwgan_elapsed += time.time() - t_start
         data['lwgan_output'] = lwgan.inference(data['lwgan_input_img'],
                                                data['lwgan_input_smpl'],
                                                data['lwgan_input_view'])
+        t_start = time.time()
         data = post_lwgan(data)
+        post_lwgan_elapsed += time.time() - t_start
 
         step_i += 1
         if step_i >= steps:
             step_i = 0
 
     elapsed = time.time() - start
-    fps = len(test_data) / elapsed
-    spf = elapsed / len(test_data)  # secons per frame
-    print('###Elapsed time:', elapsed, 'frames:', len(test_data), 'fps:', fps, 'spf:', spf)
+    n = len(test_data)
+    fps = n / elapsed
+    spf = elapsed / len(test_data)  # seconds per frame
+    print('###Elapsed time:', elapsed, 'frames:', n, 'fps:', fps, 'spf:', spf)
+    print('Mean pre yolo:', pre_yolo_elapsed / n, ', post yolo:', post_yolo_elapsed / n)
+    print('Mean pre vibe:', pre_vibe_elapsed / n, ', post vibe:', post_vibe_elapsed / n)
+    print('Mean pre lwgan:', pre_lwgan_elapsed / n, ', post lwgan:', post_lwgan_elapsed / n)
 
     # Save the results:
     result_dir = conf['output']['result_dir']
@@ -233,7 +252,7 @@ def main():
         print('==============Testing LWGAN==============')
         test_lwgan('holoport/conf/local/lwgan_conf_local.yaml', False)
 
-    test_yolo_vibe_lwgan('holoport/conf/local/yolo_vibe_lwgan_conf_local_andrey_1.yaml')
+    test_yolo_vibe_lwgan('holoport/conf/local/yolo_vibe_lwgan_conf_local_vadim_1.yaml')
 
 if __name__ == '__main__':
     main()
