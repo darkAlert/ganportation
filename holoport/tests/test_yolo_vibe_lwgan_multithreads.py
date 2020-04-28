@@ -1,3 +1,4 @@
+import sys
 import os
 import time
 import numpy as np
@@ -330,7 +331,12 @@ def test_yolo_vibe_lwgan_multithreads(path_to_conf, save_results=True):
 
 
 def main():
-    test_yolo_vibe_lwgan_multithreads('holoport/conf/local/yolo_vibe_lwgan_conf_local_vadim_1.yaml')
+    path_to_conf = 'holoport/conf/local/yolo_vibe_lwgan_conf_local.yaml'
+    if len(sys.argv) > 1:
+        path_to_conf = sys.argv[1]
+        sys.argv = [sys.argv[0]]
+
+    test_yolo_vibe_lwgan_multithreads(path_to_conf)
 
 if __name__ == '__main__':
     main()

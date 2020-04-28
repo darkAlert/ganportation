@@ -1,3 +1,4 @@
+import sys
 import os
 import time
 import numpy as np
@@ -244,6 +245,11 @@ def test_yolo_vibe_lwgan(path_to_conf, save_results=True):
 
 
 def main():
+    path_to_conf = 'holoport/conf/local/yolo_vibe_lwgan_conf_local.yaml'
+    if len(sys.argv) > 1:
+        path_to_conf = sys.argv[1]
+        sys.argv = [sys.argv[0]]
+
     if False:
         print ('==============Testing YOLO==============')
         test_yolo('holoport/conf/local/yolo_conf_local.yaml', False)
@@ -252,7 +258,7 @@ def main():
         print('==============Testing LWGAN==============')
         test_lwgan('holoport/conf/local/lwgan_conf_local.yaml', False)
 
-    test_yolo_vibe_lwgan('holoport/conf/local/yolo_vibe_lwgan_conf_local_vadim_1.yaml')
+    test_yolo_vibe_lwgan(path_to_conf)
 
 if __name__ == '__main__':
     main()

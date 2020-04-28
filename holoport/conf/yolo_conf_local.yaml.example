@@ -11,6 +11,6 @@ input:
   target_path: 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
 
 output:
-  result_dir: '/home/username/HoloVideo/Data/yolo_test'
+  result_dir: '/home/username/HoloVideo/Data/output/yolo/t1'
 
 

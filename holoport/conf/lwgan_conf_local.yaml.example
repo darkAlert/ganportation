@@ -26,7 +26,7 @@ input:
   steps: 120
 
 output:
-  result_dir: '/home/username/HoloVideo/Data/test/rt/t1'
+  result_dir: '/home/username/HoloVideo/Data/output/lwgan/t1'
 
 
 

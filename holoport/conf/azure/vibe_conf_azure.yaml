@@ -3,6 +3,7 @@ vibe:
   seqlen: 1
   scale: 1.1
   crop_size: 224
+  gpu_id: '0'
 
 input:
   frames_dir: '/usr/src/data/holovideo/frames'
@@ -11,6 +12,6 @@ input:
   target_path: 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
 
 output:
-  result_dir: '/usr/src/outputs'
+  result_dir: '/usr/src/outputs/vibe/t1'
 
 
