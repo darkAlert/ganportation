@@ -1,195 +1,18 @@
 import sys
 import os
 import time
-import numpy as np
 import cv2
 import threading
-from queue import Queue, Empty
-
+from queue import Queue
+from holoport.workers import *
 from holoport.conf.conf_parser import parse_conf
 from holoport.hlwgan import init_lwgan, parse_view_params
 from holoport.hvibe import init_vibe
 from holoport.hyolo import init_yolo
-from holoport.tests.test_yolo_vibe_lwgan import pre_yolo, post_yolo, pre_vibe, post_vibe, pre_lwgan, post_lwgan
 from holoport.tests.test_yolo_vibe_lwgan import load_frames
 
 
-def pre_yolo_by_worker(args, break_event, input_q, output_q, aux_params):
-    print('pre_yolo_by_worker has been run...')
-
-    # Parse auxiliary params:
-    dummy_scene_bbox = aux_params['dummy_scene_bbox']
-    dummy_scene_cbbox = aux_params['dummy_scene_cbbox']
-    steps = aux_params['steps']
-    view = aux_params['view']
-    delta = 360 / steps        # view changing params
-    step_i = 0
-
-    while not break_event.is_set():
-        try:
-            data = input_q.get(timeout=0.005)
-            input_q.task_done()
-        except Empty:
-            continue
-
-        # Update avatar view:
-        view['R'][0] = 0
-        view['R'][1] = delta * step_i / 180.0 * np.pi
-        view['R'][2] = 0
-        data['lwgan_input_view'] = view
-
-        # Set scene bbox and cbbox:
-        data['scene_bbox'] = dummy_scene_bbox
-        data['scene_cbbox'] = dummy_scene_cbbox
-
-        step_i += 1
-        if step_i >= steps:
-            step_i = 0
-
-        # Prepare YOLO input:
-        data = pre_yolo(data, args)
-        output_q.put(data)
-
-    print('pre_yolo_by_worker has been terminated.')
-
-    return True
-
-
-def pre_vibe_by_worker(args, break_event, input_q, output_q):
-    print('pre_vibe_by_worker has been run...')
-
-    while not break_event.is_set():
-        try:
-            data = input_q.get(timeout=0.005)
-            input_q.task_done()
-        except Empty:
-            continue
-
-        # Prepare YOLO output:
-        data = post_yolo(data)
-
-        if data['yolo_cbbox'] is None:
-            data['not_found'] = True
-            output_q.put(data)
-            print ('Skip frame {}: person not found!')
-            continue
-
-        # Prepare VIBE input:
-        data = pre_vibe(data, args)
-        output_q.put(data)
-
-    print('pre_vibe_by_worker has been terminated.')
-
-    return True
-
-
-def pre_lwgan_by_worker(args, break_event, input_q, output_q):
-    print('pre_lwgan_by_worker has been run...')
-
-    while not break_event.is_set():
-        try:
-            data = input_q.get(timeout=0.005)
-            input_q.task_done()
-        except Empty:
-            continue
-
-        if 'not_found' in data:
-            output_q.put(data)
-            continue
-
-        # Prepare VIBE output:
-        data = post_vibe(data)
-
-        # Prepare LWGAN input:
-        data = pre_lwgan(data, args)
-        output_q.put(data)
-
-    print('pre_lwgan_by_worker has been terminated.')
-
-    return True
-
-
-def postprocess_by_worker(break_event, input_q, output_q):
-    print('postprocess_by_worker has been run...')
-
-    while not break_event.is_set():
-        try:
-            data = input_q.get(timeout=0.005)
-            input_q.task_done()
-        except Empty:
-            continue
-
-        if 'not_found' in data:
-            output_q.put(data)
-            continue
-
-        # Prepare LWGAN output:
-        data = post_lwgan(data)
-        output_q.put(data)
-
-    print('postprocess_by_worker has been terminated.')
-
-    return True
-
-
-def yolo_vibe_inference_by_worker(yolo, vibe, break_event, yolo_input_q, yolo_output_q, vibe_input_q, vibe_output_q):
-    print('yolo_vibe_inference_by_worker has been run...')
-
-    while not break_event.is_set():
-        try:
-            data = yolo_input_q.get(timeout=0.005)
-            yolo_input_q.task_done()
-
-            # YOLO inference:
-            data['yolo_output'] = yolo.inference(data['yolo_input'])
-            yolo_output_q.put(data)
-        except Empty:
-            pass
-
-        try:
-            data = vibe_input_q.get(timeout=0.005)
-            vibe_input_q.task_done()
-
-            if 'not_found' in data:
-                vibe_output_q.put(data)
-            else:
-                # YOLO inference:
-                data['vibe_output'] = vibe.inference(data['vibe_input'])
-                vibe_output_q.put(data)
-        except Empty:
-            pass
-
-    print('yolo_vibe_inference_by_worker has been terminated.')
-
-    return True
-
-
-def lwgan_inference_by_worker(lwgan, break_event, input_q, output_q):
-    print('lwgan_inference_by_worker has been run...')
-
-    while not break_event.is_set():
-        try:
-            data = input_q.get(timeout=0.005)
-            input_q.task_done()
-        except Empty:
-            continue
-
-        if 'not_found' in data:
-            output_q.put(data)
-            continue
-
-        # LWGAN inference:
-        data['lwgan_output'] = lwgan.inference(data['lwgan_input_img'],
-                                               data['lwgan_input_smpl'],
-                                               data['lwgan_input_view'])
-        output_q.put(data)
-
-    print('lwgan_inference_by_worker has been terminated.')
-
-    return True
-
-
-def test_yolo_vibe_lwgan_multithreads(path_to_conf, save_results=True):
+def test_multithreads(path_to_conf, save_results=True):
     # Load configs:
     conf = parse_conf(path_to_conf)
     print('Config has been loaded from', path_to_conf)
@@ -244,29 +67,19 @@ def test_yolo_vibe_lwgan_multithreads(path_to_conf, save_results=True):
     avatar_q = Queue(maxsize=10000)
     workers = []
 
-    # Make pre yolo worker:
+    # Make workers:
     worker_args = (yolo_args, break_event, frame_q, yolo_input_q, aux_params)
-    workers.append(threading.Thread(target=pre_yolo_by_worker, args=worker_args))
-
-    # Make pre vibe worker:
+    workers.append(threading.Thread(target=pre_yolo_worker, args=worker_args))
     worker_args = (vibe_args, break_event, yolo_output_q, vibe_input_q)
-    workers.append(threading.Thread(target=pre_vibe_by_worker, args=worker_args))
-
-    # Make pre lwgan worker:
+    workers.append(threading.Thread(target=pre_vibe_worker, args=worker_args))
     worker_args = (lwgan_args, break_event, vibe_output_q, lwgan_input_q)
-    workers.append(threading.Thread(target=pre_lwgan_by_worker, args=worker_args))
-
-    # Make postprocess worker:
+    workers.append(threading.Thread(target=pre_lwgan_worker, args=worker_args))
     worker_args = (break_event, lwgan_output_q, avatar_q)
-    workers.append(threading.Thread(target=postprocess_by_worker, args=worker_args))
-
-    # Make yolo+vibe worker:
+    workers.append(threading.Thread(target=postprocess_worker, args=worker_args))
     worker_args = (yolo, vibe, break_event, yolo_input_q, yolo_output_q, vibe_input_q, vibe_output_q)
-    workers.append(threading.Thread(target=yolo_vibe_inference_by_worker, args=worker_args))
-
-    # Make lwgan worker:
+    workers.append(threading.Thread(target=yolo_vibe_inference_worker, args=worker_args))
     worker_args = (lwgan, break_event, lwgan_input_q, lwgan_output_q)
-    workers.append(threading.Thread(target=lwgan_inference_by_worker, args=worker_args))
+    workers.append(threading.Thread(target=lwgan_inference_worker, args=worker_args))
 
     # Feed data:
     for data in test_data:
@@ -336,7 +149,7 @@ def main():
         path_to_conf = sys.argv[1]
         sys.argv = [sys.argv[0]]
 
-    test_yolo_vibe_lwgan_multithreads(path_to_conf)
+    test_multithreads(path_to_conf)
 
 if __name__ == '__main__':
     main()
