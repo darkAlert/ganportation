@@ -9,11 +9,10 @@ from holoport.conf.conf_parser import parse_conf
 from holoport.tests.test_yolo import test as test_yolo
 from holoport.tests.test_vibe import test as test_vibe
 from holoport.tests.test_lwgan import test as test_lwgan
-from holoport.hlwgan import init_lwgan, parse_view_params
-from holoport.hvibe import init_vibe, convert_cam
-from holoport.hyolo import init_yolo, prepare_yolo_input, convert_yolo_output_to_bboxes
-from lwganrt.models.holoportator_rt import prepare_input as prepare_lwgan_input
-from vibert.lib.data_utils.img_utils import get_single_image_crop_demo
+from holoport.hlwgan import init_lwgan, pre_lwgan, post_lwgan, parse_view_params
+from holoport.hvibe import init_vibe, pre_vibe, post_vibe
+from holoport.hyolo import init_yolo, pre_yolo, post_yolo
+from holoport.workers import warmup_holoport_pipeline
 
 
 def get_file_paths(path, exts=('.jpeg','.jpg','.png')):
@@ -43,95 +42,7 @@ def load_frames(frames_dir, max_frames=None):
     return frames
 
 
-def pre_yolo(data, args):
-    # Prepare YOLO input:
-    data['yolo_input'] = prepare_yolo_input(data['frame'].copy(), args.yolo_img_size)
-
-    return data
-
-
-def post_yolo(data):
-    # Prepare YOLO output:
-    actual_size = [data['yolo_input'].shape[2:]]
-    origin_size = [data['frame'].shape]
-    bboxes = convert_yolo_output_to_bboxes(data['yolo_output'], actual_size, origin_size)
-
-    # Covert predicted bbox:
-    if len(bboxes):
-        # (x1,y1,x2,y2) -> (x1,y1,w,h)
-        bbox = bboxes[0].clone().numpy()
-        bbox[2] = bbox[2] - bbox[0]
-        bbox[3] = bbox[3] - bbox[1]
-        # (x1,y1,w,h) -> (x,y,s,s), s=max(w,h), x=x1-dx, y=y1-dy
-        side = max(bbox[2], bbox[3])
-        dx = (side - bbox[2]) * 0.5
-        dy = (side - bbox[3]) * 0.5
-        bbox[0] = bbox[0] - dx
-        bbox[1] = bbox[1] - dy
-        bbox[2] = side
-        bbox[3] = side
-        data['yolo_bbox'] = np.expand_dims(bbox, axis=0)
-
-        # (x,y,w,h) -> (cx,cy,w,h)
-        yolo_cbbox = np.copy(data['yolo_bbox'])
-        yolo_cbbox[:,0] = yolo_cbbox[:,0] + yolo_cbbox[:,2] * 0.5
-        yolo_cbbox[:,1] = yolo_cbbox[:,1] + yolo_cbbox[:,3] * 0.5
-        data['yolo_cbbox'] = yolo_cbbox
-    else:
-        data['yolo_bbox'] = None
-        data['yolo_cbbox'] = None
-
-    return data
-
-
-def pre_vibe(data, args):
-    # Prepare VIBE input:
-    frame_rgb = cv2.cvtColor(data['frame'], cv2.COLOR_BGR2RGB)
-    norm_img, _, _ = get_single_image_crop_demo(frame_rgb, data['yolo_cbbox'][0], kp_2d=None,
-                                                scale=args.bbox_scale, crop_size=args.crop_size)
-    data['vibe_input'] = norm_img.unsqueeze(0)
-
-    return data
-
-
-def post_vibe(data):
-    # Prepare VIBE output:
-    avatar_cam = convert_cam(cam=data['vibe_output']['pred_cam'].numpy(),
-                             bbox1=data['yolo_cbbox'],
-                             bbox2=data['scene_cbbox'],
-                             truncated=True)
-    smpl_vec = np.concatenate((avatar_cam,
-                               data['vibe_output']['pose'].numpy(),
-                               data['vibe_output']['betas'].numpy()), axis=1)
-    data['smpl_vec'] = smpl_vec
-
-    return data
-
-
-def pre_lwgan(data, args):
-    # Prepare LWGAN input:
-    frame_rgb = cv2.cvtColor(data['frame'], cv2.COLOR_BGR2RGB)
-    bbox = data['scene_bbox'][0]
-    scene_img = frame_rgb[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]]
-    prep_img, prep_smpl = prepare_lwgan_input(scene_img, data['smpl_vec'], args.image_size)
-    data['lwgan_input_img'] = prep_img
-    data['lwgan_input_smpl'] = prep_smpl
-
-    return data
-
-
-def post_lwgan(data):
-    # Prepare LWGAN output:
-    avatar = cv2.cvtColor(data['lwgan_output'], cv2.COLOR_RGB2BGR)
-
-    # Normalize avatar:
-    avatar = (avatar + 1) / 2.0 * 255
-    data['avatar'] = avatar.astype(np.uint8)
-
-    return data
-
-
-def test_yolo_vibe_lwgan(path_to_conf, save_results=True):
+def test(path_to_conf, save_results=True):
     # Load configs:
     conf = parse_conf(path_to_conf)
     print('Config has been loaded from', path_to_conf)
@@ -147,6 +58,12 @@ def test_yolo_vibe_lwgan(path_to_conf, save_results=True):
     # Init LWGAN-RT model:
     conf['lwgan']['gpu_ids'] = '1'
     lwgan, lwgan_args = init_lwgan(conf['lwgan'])
+
+    # Warmup:
+    if 'warmup_img' in conf['input']:
+        print('Warming up holoport pipeline...')
+        img = cv2.imread(conf['input']['warmup_img'],1)
+        warmup_holoport_pipeline(img, yolo, yolo_args, vibe, vibe_args, lwgan, lwgan_args)
 
     # Load test data:
     print('Loading test data...')
@@ -258,7 +175,7 @@ def main():
         print('==============Testing LWGAN==============')
         test_lwgan('holoport/conf/local/lwgan_conf_local.yaml', False)
 
-    test_yolo_vibe_lwgan(path_to_conf)
+    test(path_to_conf)
 
 if __name__ == '__main__':
     main()

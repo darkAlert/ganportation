@@ -1,8 +1,9 @@
 import torch
 import numpy as np
+import cv2
 from lwganrt.models.holoportator_rt import HoloportatorRT
 from lwganrt.options.test_options import TestOptions
-
+from lwganrt.models.holoportator_rt import prepare_input as prepare_lwgan_input
 
 class HoloLwganRT:
     def __init__(self, args, warmup=True):
@@ -51,3 +52,26 @@ def init_lwgan(lwgan_conf):
     lwgan = HoloLwganRT(args)
 
     return lwgan, args
+
+
+def pre_lwgan(data, args):
+    # Prepare LWGAN input:
+    frame_rgb = cv2.cvtColor(data['frame'], cv2.COLOR_BGR2RGB)
+    bbox = data['scene_bbox'][0]
+    scene_img = frame_rgb[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]]
+    prep_img, prep_smpl = prepare_lwgan_input(scene_img, data['smpl_vec'], args.image_size)
+    data['lwgan_input_img'] = prep_img
+    data['lwgan_input_smpl'] = prep_smpl
+
+    return data
+
+
+def post_lwgan(data):
+    # Prepare LWGAN output:
+    avatar = cv2.cvtColor(data['lwgan_output'], cv2.COLOR_RGB2BGR)
+
+    # Normalize avatar:
+    avatar = (avatar + 1) / 2.0 * 255
+    data['avatar'] = avatar.astype(np.uint8)
+
+    return data

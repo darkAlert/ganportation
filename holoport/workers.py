@@ -1,6 +1,46 @@
 import numpy as np
 from queue import Empty
-from holoport.tests.test_yolo_vibe_lwgan import pre_yolo, post_yolo, pre_vibe, post_vibe, pre_lwgan, post_lwgan
+from holoport.hlwgan import pre_lwgan, post_lwgan, parse_view_params
+from holoport.hvibe import pre_vibe, post_vibe
+from holoport.hyolo import pre_yolo, post_yolo
+
+
+def warmup_holoport_pipeline(img, yolo, yolo_args, vibe, vibe_args, lwgan, lwgan_args):
+    assert img is not None
+
+    # Set dummy input:
+    data = {'frame': img}
+    view = parse_view_params('R=0,90,0/t=0,0,0')
+    view['R'][0] = 0
+    view['R'][1] = 0
+    view['R'][2] = 0
+    data['lwgan_input_view'] = view
+    dummy_scene_bbox = np.array([[575, 150, 850, 850]], dtype=np.int64)
+    dummy_scene_cbbox = dummy_scene_bbox.copy()
+    dummy_scene_cbbox[:, 0] = dummy_scene_bbox[:, 0] + dummy_scene_bbox[:, 2] * 0.5  # (x,y,w,h) -> (cx,cy,w,h)
+    dummy_scene_cbbox[:, 1] = dummy_scene_bbox[:, 1] + dummy_scene_bbox[:, 3] * 0.5
+    data['scene_bbox'] = dummy_scene_bbox
+    data['scene_cbbox'] = dummy_scene_cbbox
+
+    # YOLO:
+    data = pre_yolo(data, yolo_args)
+    data['yolo_output'] = yolo.inference(data['yolo_input'])
+    data = post_yolo(data)
+
+    assert data['yolo_cbbox'] is not None
+
+    # VIBE:
+    data = pre_vibe(data, vibe_args)
+    data['vibe_output'] = vibe.inference(data['vibe_input'])
+    data = post_vibe(data)
+
+    # LWGAN:
+    data = pre_lwgan(data, lwgan_args)
+    data['lwgan_output'] = lwgan.inference(data['lwgan_input_img'],
+                                           data['lwgan_input_smpl'],
+                                           data['lwgan_input_view'])
+
+    return True
 
 
 def pre_yolo_worker(args, break_event, input_q, output_q, aux_params, timeout=0.005):
@@ -153,15 +193,25 @@ def yolo_vibe_inference_worker(yolo, vibe, break_event, yolo_input_q, yolo_outpu
     return True
 
 
-def lwgan_inference_worker(lwgan, break_event, input_q, output_q, timeout=0.005):
+def lwgan_inference_worker(lwgan, break_event, input_q, output_q, timeout=0.005, skip_frames=False):
     print('lwgan_inference_by_worker has been run...')
 
     while not break_event.is_set():
-        try:
-            data = input_q.get(timeout=timeout)
-            input_q.task_done()
-        except Empty:
-            continue
+        if skip_frames:
+            data = None
+            try:
+                while True:
+                    data = input_q.get_nowait()
+                    input_q.task_done()
+            except Empty:
+                if data is None:
+                    continue
+        else:
+            try:
+                data = input_q.get(timeout=timeout)
+                input_q.task_done()
+            except Empty:
+                continue
 
         if 'not_found' in data:
             output_q.put(data)

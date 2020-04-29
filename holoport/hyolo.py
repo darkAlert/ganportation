@@ -141,3 +141,44 @@ def init_yolo(yolo_conf):
     print('Loaded pretrained YOLOv3 weights from', args.yolo_weights)
 
     return yolo, args
+
+
+def pre_yolo(data, args):
+    # Prepare YOLO input:
+    data['yolo_input'] = prepare_yolo_input(data['frame'].copy(), args.yolo_img_size)
+
+    return data
+
+
+def post_yolo(data):
+    # Prepare YOLO output:
+    actual_size = [data['yolo_input'].shape[2:]]
+    origin_size = [data['frame'].shape]
+    bboxes = convert_yolo_output_to_bboxes(data['yolo_output'], actual_size, origin_size)
+
+    # Covert predicted bbox:
+    if len(bboxes):
+        # (x1,y1,x2,y2) -> (x1,y1,w,h)
+        bbox = bboxes[0].clone().numpy()
+        bbox[2] = bbox[2] - bbox[0]
+        bbox[3] = bbox[3] - bbox[1]
+        # (x1,y1,w,h) -> (x,y,s,s), s=max(w,h), x=x1-dx, y=y1-dy
+        side = max(bbox[2], bbox[3])
+        dx = (side - bbox[2]) * 0.5
+        dy = (side - bbox[3]) * 0.5
+        bbox[0] = bbox[0] - dx
+        bbox[1] = bbox[1] - dy
+        bbox[2] = side
+        bbox[3] = side
+        data['yolo_bbox'] = np.expand_dims(bbox, axis=0)
+
+        # (x,y,w,h) -> (cx,cy,w,h)
+        yolo_cbbox = np.copy(data['yolo_bbox'])
+        yolo_cbbox[:,0] = yolo_cbbox[:,0] + yolo_cbbox[:,2] * 0.5
+        yolo_cbbox[:,1] = yolo_cbbox[:,1] + yolo_cbbox[:,3] * 0.5
+        data['yolo_cbbox'] = yolo_cbbox
+    else:
+        data['yolo_bbox'] = None
+        data['yolo_cbbox'] = None
+
+    return data

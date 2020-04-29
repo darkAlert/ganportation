@@ -12,7 +12,7 @@ from holoport.hyolo import init_yolo
 from holoport.tests.test_yolo_vibe_lwgan import load_frames
 
 
-def test_multithreads(path_to_conf, save_results=True):
+def test_multithreads(path_to_conf, save_results=True, realtime_fps=None):
     # Load configs:
     conf = parse_conf(path_to_conf)
     print('Config has been loaded from', path_to_conf)
@@ -28,6 +28,12 @@ def test_multithreads(path_to_conf, save_results=True):
     # Init LWGAN-RT model:
     conf['lwgan']['gpu_ids'] = '0'
     lwgan, lwgan_args = init_lwgan(conf['lwgan'])
+
+    # Warmup:
+    if 'warmup_img' in conf['input']:
+        print('Warming up holoport pipeline...')
+        img = cv2.imread(conf['input']['warmup_img'],1)
+        warmup_holoport_pipeline(img, yolo, yolo_args, vibe, vibe_args, lwgan, lwgan_args)
 
     # Load test data:
     print('Loading test data...')
@@ -78,30 +84,45 @@ def test_multithreads(path_to_conf, save_results=True):
     workers.append(threading.Thread(target=postprocess_worker, args=worker_args))
     worker_args = (yolo, vibe, break_event, yolo_input_q, yolo_output_q, vibe_input_q, vibe_output_q)
     workers.append(threading.Thread(target=yolo_vibe_inference_worker, args=worker_args))
-    worker_args = (lwgan, break_event, lwgan_input_q, lwgan_output_q)
+    worker_args = (lwgan, break_event, lwgan_input_q, lwgan_output_q, 0, True)
     workers.append(threading.Thread(target=lwgan_inference_worker, args=worker_args))
 
     # Feed data:
-    for data in test_data:
-        frame_q.put(data)
+    if realtime_fps is None:
+        for data in test_data:
+            frame_q.put(data)
 
-    print('Inferencing...')
+    print('Inferencing... realtime fps:', realtime_fps)
     start = time.time()
 
     # Run workers:
     for w in workers:
         w.start()
 
-    # Wait for all the data to be processed
-    while not frame_q.empty() or \
-            not yolo_input_q.empty() or \
-            not yolo_output_q.empty() or \
-            not vibe_input_q.empty() or \
-            not vibe_output_q.empty() or \
-            not lwgan_input_q.empty() or \
-            not lwgan_output_q.empty():
-        print ('{}/{}, yolo_in:{}, yolo_out:{}, vibe_in:{}, vibe_out:{}, lwgan_in:{}, lwgan_out:{}'.format(avatar_q.qsize(), len(test_data), yolo_input_q.qsize(), yolo_output_q.qsize(), vibe_input_q.qsize(), vibe_output_q.qsize(), lwgan_input_q.qsize(), lwgan_output_q.qsize()))
-        time.sleep(0.1)
+    if realtime_fps is not None:
+        # Simulate real-time frame capturing:
+        for data in test_data:
+            frame_q.put(data)
+            print('{}/{}, yolo_in:{}, yolo_out:{}, vibe_in:{}, vibe_out:{}, lwgan_in:{}, lwgan_out:{}'.format(
+                avatar_q.qsize(), len(test_data), yolo_input_q.qsize(),
+                yolo_output_q.qsize(), vibe_input_q.qsize(), vibe_output_q.qsize(),
+                lwgan_input_q.qsize(), lwgan_output_q.qsize()))
+            time.sleep(realtime_fps)
+
+    else:
+        # Wait for all the data to be processed
+        while not frame_q.empty() or \
+                not yolo_input_q.empty() or \
+                not yolo_output_q.empty() or \
+                not vibe_input_q.empty() or \
+                not vibe_output_q.empty() or \
+                not lwgan_input_q.empty() or \
+                not lwgan_output_q.empty():
+            print ('{}/{}, yolo_in:{}, yolo_out:{}, vibe_in:{}, vibe_out:{}, lwgan_in:{}, lwgan_out:{}'.format(
+                avatar_q.qsize(), len(test_data), yolo_input_q.qsize(),
+                yolo_output_q.qsize(), vibe_input_q.qsize(), vibe_output_q.qsize(),
+                lwgan_input_q.qsize(), lwgan_output_q.qsize()))
+            time.sleep(1.1)
 
     # Stop workers:
     break_event.set()
@@ -149,6 +170,7 @@ def main():
         path_to_conf = sys.argv[1]
         sys.argv = [sys.argv[0]]
 
+    # test_multithreads(path_to_conf, realtime_fps=0.030)
     test_multithreads(path_to_conf)
 
 if __name__ == '__main__':

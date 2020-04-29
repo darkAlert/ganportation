@@ -1,8 +1,10 @@
 import os
 import torch
 import numpy as np
+import cv2
 import argparse
 from vibert.lib.models.vibe_rt import VibeRT
+from vibert.lib.data_utils.img_utils import get_single_image_crop_demo
 
 
 class HoloVibeRT():
@@ -108,3 +110,27 @@ def init_vibe(vibe_conf):
     print('Loaded pretrained VIBE weights from', args.vibe_model_path)
 
     return vibe, args
+
+
+def pre_vibe(data, args):
+    # Prepare VIBE input:
+    frame_rgb = cv2.cvtColor(data['frame'], cv2.COLOR_BGR2RGB)
+    norm_img, _, _ = get_single_image_crop_demo(frame_rgb, data['yolo_cbbox'][0], kp_2d=None,
+                                                scale=args.bbox_scale, crop_size=args.crop_size)
+    data['vibe_input'] = norm_img.unsqueeze(0)
+
+    return data
+
+
+def post_vibe(data):
+    # Prepare VIBE output:
+    avatar_cam = convert_cam(cam=data['vibe_output']['pred_cam'].numpy(),
+                             bbox1=data['yolo_cbbox'],
+                             bbox2=data['scene_cbbox'],
+                             truncated=True)
+    smpl_vec = np.concatenate((avatar_cam,
+                               data['vibe_output']['pose'].numpy(),
+                               data['vibe_output']['betas'].numpy()), axis=1)
+    data['smpl_vec'] = smpl_vec
+
+    return data
