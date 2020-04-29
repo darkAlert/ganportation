@@ -1,6 +1,5 @@
 import sys
 import os
-import time
 import cv2
 import threading
 from queue import Queue
@@ -12,7 +11,7 @@ from holoport.hyolo import init_yolo
 from holoport.tests.test_yolo_vibe_lwgan import load_frames
 
 
-def test_multithreads(path_to_conf, save_results=True, realtime_fps=None):
+def test_multithreads(path_to_conf, save_results=True, realtime_ms=None):
     # Load configs:
     conf = parse_conf(path_to_conf)
     print('Config has been loaded from', path_to_conf)
@@ -84,22 +83,25 @@ def test_multithreads(path_to_conf, save_results=True, realtime_fps=None):
     workers.append(threading.Thread(target=postprocess_worker, args=worker_args))
     worker_args = (yolo, vibe, break_event, yolo_input_q, yolo_output_q, vibe_input_q, vibe_output_q)
     workers.append(threading.Thread(target=yolo_vibe_inference_worker, args=worker_args))
-    worker_args = (lwgan, break_event, lwgan_input_q, lwgan_output_q, 0, True)
+    if realtime_ms is None:
+        worker_args = (lwgan, break_event, lwgan_input_q, lwgan_output_q)
+    else:
+        worker_args = (lwgan, break_event, lwgan_input_q, lwgan_output_q, 0.005, True)
     workers.append(threading.Thread(target=lwgan_inference_worker, args=worker_args))
 
     # Feed data:
-    if realtime_fps is None:
+    if realtime_ms is None:
         for data in test_data:
             frame_q.put(data)
 
-    print('Inferencing... realtime fps:', realtime_fps)
+    print('Inferencing... realtime fps:', realtime_ms)
     start = time.time()
 
     # Run workers:
     for w in workers:
         w.start()
 
-    if realtime_fps is not None:
+    if realtime_ms is not None:
         # Simulate real-time frame capturing:
         for data in test_data:
             frame_q.put(data)
@@ -107,7 +109,7 @@ def test_multithreads(path_to_conf, save_results=True, realtime_fps=None):
                 avatar_q.qsize(), len(test_data), yolo_input_q.qsize(),
                 yolo_output_q.qsize(), vibe_input_q.qsize(), vibe_output_q.qsize(),
                 lwgan_input_q.qsize(), lwgan_output_q.qsize()))
-            time.sleep(realtime_fps)
+            time.sleep(realtime_ms)
 
     else:
         # Wait for all the data to be processed
@@ -122,7 +124,7 @@ def test_multithreads(path_to_conf, save_results=True, realtime_fps=None):
                 avatar_q.qsize(), len(test_data), yolo_input_q.qsize(),
                 yolo_output_q.qsize(), vibe_input_q.qsize(), vibe_output_q.qsize(),
                 lwgan_input_q.qsize(), lwgan_output_q.qsize()))
-            time.sleep(1.1)
+            time.sleep(0.1)
 
     # Stop workers:
     break_event.set()
@@ -134,9 +136,10 @@ def test_multithreads(path_to_conf, save_results=True, realtime_fps=None):
     # Log:
     elapsed = time.time() - start
     n = len(test_data)
+    m = avatar_q.qsize()
     fps = n / elapsed
     spf = elapsed / len(test_data)  # seconds per frame
-    print('###Elapsed time:', elapsed, 'frames:', n, 'fps:', fps, 'spf:', spf)
+    print('###Elapsed time:', elapsed, 'processed:{}/{}'.format(m,n), 'fps:', fps, 'spf:', spf)
 
     # Save the results:
     result_dir = conf['output']['result_dir']
@@ -170,8 +173,8 @@ def main():
         path_to_conf = sys.argv[1]
         sys.argv = [sys.argv[0]]
 
-    # test_multithreads(path_to_conf, realtime_fps=0.030)
-    test_multithreads(path_to_conf)
+    test_multithreads(path_to_conf, realtime_ms=0.06)  # ~16.5 fps
+    # test_multithreads(path_to_conf)
 
 if __name__ == '__main__':
     main()

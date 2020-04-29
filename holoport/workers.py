@@ -1,5 +1,6 @@
 import numpy as np
 from queue import Empty
+import time
 from holoport.hlwgan import pre_lwgan, post_lwgan, parse_view_params
 from holoport.hvibe import pre_vibe, post_vibe
 from holoport.hyolo import pre_yolo, post_yolo
@@ -205,6 +206,7 @@ def lwgan_inference_worker(lwgan, break_event, input_q, output_q, timeout=0.005,
                     input_q.task_done()
             except Empty:
                 if data is None:
+                    time.sleep(timeout)
                     continue
         else:
             try:
