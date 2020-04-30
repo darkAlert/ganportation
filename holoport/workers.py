@@ -6,7 +6,7 @@ from holoport.hvibe import pre_vibe, post_vibe
 from holoport.hyolo import pre_yolo, post_yolo
 
 
-def warmup_holoport_pipeline(img, yolo, yolo_args, vibe, vibe_args, lwgan, lwgan_args):
+def warmup_holoport_pipeline(img, yolo, yolo_args, vibe=None, vibe_args=None, lwgan=None, lwgan_args=None):
     print('Warming up holoport pipeline...')
     assert img is not None
 
@@ -32,11 +32,15 @@ def warmup_holoport_pipeline(img, yolo, yolo_args, vibe, vibe_args, lwgan, lwgan
     assert data['yolo_cbbox'] is not None
 
     # VIBE:
+    if vibe is None or vibe_args is None:
+        return True
     data = pre_vibe(data, vibe_args)
     data['vibe_output'] = vibe.inference(data['vibe_input'])
     data = post_vibe(data)
 
     # LWGAN:
+    if lwgan is None or lwgan_args is None:
+        return True
     data = pre_lwgan(data, lwgan_args)
     data['lwgan_output'] = lwgan.inference(data['lwgan_input_img'],
                                            data['lwgan_input_smpl'],

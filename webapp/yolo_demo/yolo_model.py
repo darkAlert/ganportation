@@ -52,12 +52,12 @@ def send_worker(break_event, avatar_q, send_data, send_frame, timeout=0.005):
     return True
 
 
-class HoloportModel(object):
-    LABEL = ['holoport_realtime']
+class YoloModel(object):
+    LABEL = ['yolo_realtime']
     SENDS_VIDEO = True
     SENDS_DATA = True
 
-    def __init__(self, connector, label=None, path_to_conf='holoport_conf_azure.yaml'):
+    def __init__(self, connector, label=None, path_to_conf='yolo_conf_azure.yaml'):
         self.connector = connector
 
         # Load config:
@@ -65,10 +65,8 @@ class HoloportModel(object):
         conf = parse_conf(path_to_conf)
         self.connector.logger.info('Config has been loaded from {}'.format(path_to_conf))
 
-        # Init models:
+        # Init model:
         self.yolo, self.yolo_args = init_yolo(conf['yolo'])
-        self.vibe, self.vibe_args = init_vibe(conf['vibe'])
-        self.lwgan, self.lwgan_args = init_lwgan(conf['lwgan'])
 
         # Warmup:
         if 'warmup_img' in conf['input']:

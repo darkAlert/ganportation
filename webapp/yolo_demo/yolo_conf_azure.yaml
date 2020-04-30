@@ -1,0 +1,15 @@
+yolo:
+  cfg_path: '/usr/src/models/yolo_data/yolov3-spp.cfg'
+  weights_path: '/usr/src/models/yolo_data/yolov3-spp-ultralytics.pt'
+  names_path: '/usr/src/models/yolo_data/coco.names'
+  img_size: 512
+  gpu_id: '1'
+  half: False
+
+input:
+  warmup_img: '/usr/src/data/holovideo/samples/img0.jpeg'
+
+output:
+  result_dir: '/usr/src/outputs/yolo/t1'
+
+
