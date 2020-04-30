@@ -47,7 +47,7 @@ RUN mkdir -p /usr/src/models ;\
 
 # download holovideo from Azure Blob Storage
 RUN mkdir -p /usr/src/data ;\
-    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/data/holovideo.tar.gz?st=2020-04-28T13%3A46%3A06Z&se=2020-05-31T13%3A46%3A00Z&sp=rl&sv=2018-03-28&sr=b&sig=ABK8F7bdK4vuK2sHA3MMI1318P4VoVSaRBvNZaOGNAQ%3D" "/usr/src/data/holovideo.tar.gz" ;\
+    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/data/holovideo.tar.gz?st=2020-04-30T12%3A16%3A32Z&se=2020-05-31T12%3A16%3A00Z&sp=rl&sv=2018-03-28&sr=b&sig=Ytr38HMo4mZTA4ZuNQvfgh5%2B1XclNUEZFezS6ag7oMs%3D" "/usr/src/data/holovideo.tar.gz" ;\
     tar -xvf /usr/src/data/holovideo.tar.gz -C /usr/src/data ;\
     rm /usr/src/data/holovideo.tar.gz
 

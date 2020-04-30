@@ -15,9 +15,9 @@ def send_worker(break_event, avatar_q, send_data, send_frame, timeout=0.005):
 
     # Make not_found frame:
     not_found_frame = np.zeros((256,256,3),dtype=np.uint8)
-    text = 'Person not found'
-    pos = (int(round(256/2)), int(round(256/2)))
-    cv2.putText(not_found_frame, text, pos, cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 255, 255), 3)
+    text = 'Person not found!'
+    pos = (10, 120)
+    cv2.putText(not_found_frame, text, pos, cv2.FONT_HERSHEY_SIMPLEX, 0.85, (255, 255, 255), 1)
 
     start = time.time()
 
@@ -30,20 +30,21 @@ def send_worker(break_event, avatar_q, send_data, send_frame, timeout=0.005):
 
         # Measure FPS:
         stop = time.time()
-        elapsed = start - stop
+        elapsed = stop - start
         start = stop
         fps = 1000 / elapsed
 
         if 'not_found' in data:
             # Send not_found frame:
             frame = not_found_frame.copy()
-            cv2.putText(frame, text, (5, 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+            text = '{:.1f}'.format(fps)
+            cv2.putText(frame, text, (5, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
             send_data(dict(fps=fps, not_found=True))
             send_frame(frame)
         else:
             # Send the avatar:
-            text = '{:.1f}'.format(0)
-            cv2.putText(data['avatar'], text, (5, 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+            text = '{:.1f}'.format(fps)
+            cv2.putText(data['avatar'], text, (5, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
             send_data(dict(fps=fps))
             send_frame(data['avatar'])
 
@@ -128,14 +129,21 @@ class HoloportModel(object):
     def run(self):
         self.connector.logger.info('Running holoport...')
 
+        test_frame = np.zeros((256, 256, 3), dtype=np.uint8)
+
         # Run workers:
         for w in self.workers:
             w.start()
 
+        # Cleanup frames queue:
+        _ = self.connector.recv_all_frames()
+
         for frame in self.connector.frames():
             if frame is not None:
                 # Put frame in the queue and continue:
-                self.frame_q.put({'frame': frame})
+                # self.frame_q.put({'frame': frame})
+                self.frame_q.put({'frame': test_frame.copy()})
+
             else:
                 print ('break')
                 # Or terminate the process and wait for the workers:
