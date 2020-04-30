@@ -102,7 +102,6 @@ def pre_vibe_worker(args, break_event, input_q, output_q, timeout=0.005):
         if data['yolo_cbbox'] is None:
             data['not_found'] = True
             output_q.put(data)
-            print ('Skip frame {}: person not found!')
             continue
 
         # Prepare VIBE input:
