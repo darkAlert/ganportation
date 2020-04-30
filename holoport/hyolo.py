@@ -53,12 +53,16 @@ class HoloYoloRT():
                 pred = pred.float()
 
             # Apply NMS:
-            pred = non_max_suppression(pred, self.conf_thres, self.iou_thres,
-                                       multi_label=False, classes=self.classes, agnostic=self.agnostic_nms)
+            nms_pred = non_max_suppression(pred, self.conf_thres, self.iou_thres,
+                                           multi_label=False, classes=self.classes, agnostic=self.agnostic_nms)
 
             # To CPU:
-            for i in range(len(pred)):
-                pred[i] = pred[i].cpu()
+            pred = []
+            for p in nms_pred:
+                if p is not None:
+                    pred.append(p.cpu())
+                else:
+                    pred.append(None)
 
             return pred
 
@@ -157,7 +161,7 @@ def post_yolo(data):
     bboxes = convert_yolo_output_to_bboxes(data['yolo_output'], actual_size, origin_size)
 
     # Covert predicted bbox:
-    if len(bboxes):
+    if len(bboxes) and bboxes[0] is not None:
         # (x1,y1,x2,y2) -> (x1,y1,w,h)
         bbox = bboxes[0].clone().numpy()
         bbox[2] = bbox[2] - bbox[0]
