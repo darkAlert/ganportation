@@ -61,7 +61,6 @@ def test(path_to_conf, save_results=True):
 
     # Warmup:
     if 'warmup_img' in conf['input']:
-        print('Warming up holoport pipeline...')
         img = cv2.imread(conf['input']['warmup_img'],1)
         warmup_holoport_pipeline(img, yolo, yolo_args, vibe, vibe_args, lwgan, lwgan_args)
 

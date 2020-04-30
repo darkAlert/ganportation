@@ -7,6 +7,7 @@ from holoport.hyolo import pre_yolo, post_yolo
 
 
 def warmup_holoport_pipeline(img, yolo, yolo_args, vibe, vibe_args, lwgan, lwgan_args):
+    print('Warming up holoport pipeline...')
     assert img is not None
 
     # Set dummy input:
@@ -45,7 +46,7 @@ def warmup_holoport_pipeline(img, yolo, yolo_args, vibe, vibe_args, lwgan, lwgan
 
 
 def pre_yolo_worker(args, break_event, input_q, output_q, aux_params, timeout=0.005):
-    print('pre_yolo_by_worker has been run...')
+    print('pre_yolo_worker has been run...')
 
     # Parse auxiliary params:
     dummy_scene_bbox = aux_params['dummy_scene_bbox']
@@ -80,13 +81,13 @@ def pre_yolo_worker(args, break_event, input_q, output_q, aux_params, timeout=0.
         data = pre_yolo(data, args)
         output_q.put(data)
 
-    print('pre_yolo_by_worker has been terminated.')
+    print('pre_yolo_worker has been terminated.')
 
     return True
 
 
 def pre_vibe_worker(args, break_event, input_q, output_q, timeout=0.005):
-    print('pre_vibe_by_worker has been run...')
+    print('pre_vibe_worker has been run...')
 
     while not break_event.is_set():
         try:
@@ -108,13 +109,13 @@ def pre_vibe_worker(args, break_event, input_q, output_q, timeout=0.005):
         data = pre_vibe(data, args)
         output_q.put(data)
 
-    print('pre_vibe_by_worker has been terminated.')
+    print('pre_vibe_worker has been terminated.')
 
     return True
 
 
 def pre_lwgan_worker(args, break_event, input_q, output_q, timeout=0.005):
-    print('pre_lwgan_by_worker has been run...')
+    print('pre_lwgan_worker has been run...')
 
     while not break_event.is_set():
         try:
@@ -134,13 +135,13 @@ def pre_lwgan_worker(args, break_event, input_q, output_q, timeout=0.005):
         data = pre_lwgan(data, args)
         output_q.put(data)
 
-    print('pre_lwgan_by_worker has been terminated.')
+    print('pre_lwgan_worker has been terminated.')
 
     return True
 
 
 def postprocess_worker(break_event, input_q, output_q, timeout=0.005):
-    print('postprocess_by_worker has been run...')
+    print('postprocess_worker has been run...')
 
     while not break_event.is_set():
         try:
@@ -157,13 +158,13 @@ def postprocess_worker(break_event, input_q, output_q, timeout=0.005):
         data = post_lwgan(data)
         output_q.put(data)
 
-    print('postprocess_by_worker has been terminated.')
+    print('postprocess_worker has been terminated.')
 
     return True
 
 
 def yolo_vibe_inference_worker(yolo, vibe, break_event, yolo_input_q, yolo_output_q, vibe_input_q, vibe_output_q, timeout1=0.005, timeout2=0.005):
-    print('yolo_vibe_inference_by_worker has been run...')
+    print('yolo_vibe_inference_worker has been run...')
 
     while not break_event.is_set():
         try:
@@ -189,13 +190,13 @@ def yolo_vibe_inference_worker(yolo, vibe, break_event, yolo_input_q, yolo_outpu
         except Empty:
             pass
 
-    print('yolo_vibe_inference_by_worker has been terminated.')
+    print('yolo_vibe_inference_worker has been terminated.')
 
     return True
 
 
 def lwgan_inference_worker(lwgan, break_event, input_q, output_q, timeout=0.005, skip_frames=False):
-    print('lwgan_inference_by_worker has been run...')
+    print('lwgan_inference_worker has been run...')
 
     while not break_event.is_set():
         if skip_frames:
@@ -225,6 +226,6 @@ def lwgan_inference_worker(lwgan, break_event, input_q, output_q, timeout=0.005,
                                                data['lwgan_input_view'])
         output_q.put(data)
 
-    print('lwgan_inference_by_worker has been terminated.')
+    print('lwgan_inference_worker has been terminated.')
 
     return True
