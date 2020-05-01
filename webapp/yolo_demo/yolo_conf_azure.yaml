@@ -8,6 +8,9 @@ yolo:
 
 input:
   warmup_img: '/usr/src/data/holovideo/samples/img0.jpeg'
+  view: 'R=0,90,0/t=0,0,0'
+  steps: 1
+  scene_bbox: '575,150,850,850'
 
 output:
   result_dir: '/usr/src/outputs/yolo/t1'

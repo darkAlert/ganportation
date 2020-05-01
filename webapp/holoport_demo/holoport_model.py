@@ -52,6 +52,29 @@ def send_worker(break_event, avatar_q, send_data, send_frame, timeout=0.005):
     return True
 
 
+def generate_aux_params(conf):
+    # Avatar view params:
+    steps = conf['steps']
+    view = parse_view_params(conf['view'])
+
+    # Dummy scene params:
+    t = conf['scene_bbox'].split(',')
+    assert len(t) == 4
+    dummy_scene_bbox = np.array([[int(t[0]), int(t[1]), int(t[2]), int(t[3])]], dtype=np.int64)
+    dummy_scene_cbbox = dummy_scene_bbox.copy()
+    dummy_scene_cbbox[:, 0] = dummy_scene_bbox[:, 0] + dummy_scene_bbox[:, 2] * 0.5  # (x,y,w,h) -> (cx,cy,w,h)
+    dummy_scene_cbbox[:, 1] = dummy_scene_bbox[:, 1] + dummy_scene_bbox[:, 3] * 0.5
+
+    # Set auxiliary params:
+    aux_params = {}
+    aux_params['dummy_scene_bbox'] = dummy_scene_bbox
+    aux_params['dummy_scene_cbbox'] = dummy_scene_cbbox
+    aux_params['steps'] = steps
+    aux_params['view'] = view
+
+    return aux_params
+
+
 class HoloportModel(object):
     LABEL = ['holoport_realtime']
     SENDS_VIDEO = True
@@ -76,24 +99,8 @@ class HoloportModel(object):
             warmup_holoport_pipeline(img, self.yolo, self.yolo_args, self.vibe,
                                      self.vibe_args, self.lwgan, self.lwgan_args)
 
-        # Avatar view params:
-        steps = conf['input']['steps']
-        view = parse_view_params(conf['input']['view'])
-
-        # Dummy scene params:
-        t = conf['input']['scene_bbox'].split(',')
-        assert len(t) == 4
-        dummy_scene_bbox = np.array([[int(t[0]), int(t[1]), int(t[2]), int(t[3])]], dtype=np.int64)
-        dummy_scene_cbbox = dummy_scene_bbox.copy()
-        dummy_scene_cbbox[:, 0] = dummy_scene_bbox[:, 0] + dummy_scene_bbox[:, 2] * 0.5  # (x,y,w,h) -> (cx,cy,w,h)
-        dummy_scene_cbbox[:, 1] = dummy_scene_bbox[:, 1] + dummy_scene_bbox[:, 3] * 0.5
-
-        # Set auxiliary params:
-        self.aux_params = {}
-        self.aux_params['dummy_scene_bbox'] = dummy_scene_bbox
-        self.aux_params['dummy_scene_cbbox'] = dummy_scene_cbbox
-        self.aux_params['steps'] = steps
-        self.aux_params['view'] = view
+        # Auxiliary params:
+        self.aux_params = generate_aux_params(conf['input'])
 
         # Make queues, events and threads:
         self.break_event = threading.Event()
