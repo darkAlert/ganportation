@@ -35,19 +35,19 @@ RUN mkdir -p /usr/src/models ;\
 
 # download yolo_data from Azure Blob Storage
 RUN mkdir -p /usr/src/models ;\
-    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/models/yolo_data.tar.gz?st=2020-04-28T09%3A31%3A08Z&se=2020-05-31T09%3A31%3A00Z&sp=rl&sv=2018-03-28&sr=b&sig=n%2B%2FATNCqLJOZB2a794%2F3F%2BCz2a9BHzLTh4SgCUAqsZ0%3D" "/usr/src/models/yolo_data.tar.gz" ;\
+    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/models/yolo_data.tar.gz?sp=rl&st=2020-05-04T14:09:21Z&se=2020-05-31T14:09:00Z&sv=2019-10-10&sr=b&sig=4aFn2t4%2BXVXxUT6KOnhjQfWYCIPKMGpRD8Z8gKJ%2B6is%3D" "/usr/src/models/yolo_data.tar.gz" ;\
     tar -xvf /usr/src/models/yolo_data.tar.gz -C /usr/src/models ;\
     rm /usr/src/models/yolo_data.tar.gz
 
 # download lwgan_data from Azure Blob Storage
 RUN mkdir -p /usr/src/models ;\
-    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/models/lwgan_data.tar.gz?st=2020-04-28T09%3A32%3A41Z&se=2020-05-31T09%3A32%3A00Z&sp=rl&sv=2018-03-28&sr=b&sig=p6rJqCOGY58r%2BtrgOHbTz%2BcKNWCpnuKOcjXw2xa0ct0%3D" "/usr/src/models/lwgan_data.tar.gz" ;\
+    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/models/lwgan_data.tar.gz?sp=rl&st=2020-05-04T14:08:13Z&se=2020-05-31T14:08:00Z&sv=2019-10-10&sr=b&sig=v2O7c2BzIo9t52CCpzatcKgPysX2Lup2qtlXSTlGcBo%3D" "/usr/src/models/lwgan_data.tar.gz" ;\
     tar -xvf /usr/src/models/lwgan_data.tar.gz -C /usr/src/models ;\
     rm /usr/src/models/lwgan_data.tar.gz
 
 # download holovideo from Azure Blob Storage
 RUN mkdir -p /usr/src/data ;\
-    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/data/holovideo.tar.gz?st=2020-04-30T12%3A16%3A32Z&se=2020-05-31T12%3A16%3A00Z&sp=rl&sv=2018-03-28&sr=b&sig=Ytr38HMo4mZTA4ZuNQvfgh5%2B1XclNUEZFezS6ag7oMs%3D" "/usr/src/data/holovideo.tar.gz" ;\
+    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/data/holovideo.tar.gz?sp=rl&st=2020-05-04T14:09:51Z&se=2020-05-31T14:09:00Z&sv=2019-10-10&sr=b&sig=Ny6HjsP7jnwoAF37BYuFo%2BGrLC95C3U2q421NQ10uSg%3D" "/usr/src/data/holovideo.tar.gz" ;\
     tar -xvf /usr/src/data/holovideo.tar.gz -C /usr/src/data ;\
     rm /usr/src/data/holovideo.tar.gz
 
