@@ -1,4 +1,4 @@
-﻿﻿﻿﻿# USING DOCKER #
+﻿﻿﻿﻿﻿# USING DOCKER #
 
 
 ### Install Docker ###
@@ -6,6 +6,10 @@
 sudo apt-get remove docker docker-engine docker.io containerd runc
 sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io
+```
+or, if you are having problems, you can try the following:
+```
+curl -fsSL test.docker.com | sh
 ```
 
 ### INSTALL NVIDIA CONTAINER ###
