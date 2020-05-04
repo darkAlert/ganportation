@@ -1,7 +1,7 @@
 import os
 import cv2
 import threading
-from queue import Queue
+from queue import Queue, Empty, Full
 from holoport.workers import *
 from holoport.conf.conf_parser import parse_conf
 from holoport.hyolo import init_yolo
@@ -129,6 +129,8 @@ class YoloModel(object):
 
     def __init__(self, connector, label=None, path_to_conf='yolo_conf_azure.yaml'):
         self.connector = connector
+        self.connector.enable_frame_throw()
+        self.name = 'YoloModel'
 
         # Load config:
         path_to_conf = os.path.join(os.path.dirname(__file__), path_to_conf)
@@ -165,7 +167,7 @@ class YoloModel(object):
         self.workers.append(threading.Thread(target=send_worker, args=worker_args))
 
     def run(self):
-        self.connector.logger.info('Running yolo...')
+        self.connector.logger.info('Running {}...'.format(self.name))
 
         # Run workers:
         for w in self.workers:
@@ -175,17 +177,26 @@ class YoloModel(object):
         _ = self.connector.recv_all_frames()
 
         for idx, frame in enumerate(self.connector.frames()):
-            if frame is not None:
-                # Put frame in the queue and continue:
-                self.frame_q.put({'frame': frame.copy()})
-            else:
-                # Or terminate the process and wait for the workers:
-                self.break_event.set()
-                for w in self.workers:
-                    w.join()
-                self.connector.logger.info('Yolo model has been stopped!')
-                return True
+            if self.break_event.is_set():
+                break
 
-            print('idx:{}, frames:{}, yolo_in:{}, yolo_out:{}, avatars:{}'.format(
-                idx, self.frame_q.qsize(),self.yolo_input_q.qsize(),
-                self.yolo_output_q.qsize(), self.avatar_q.qsize()))
+            if frame is not None:
+                data = {'frame': frame}
+                self.frame_q.put(data, timeout=0.005)
+            else:
+                self.stop()
+
+            # print('idx:{}, frames:{}, yolo_in:{}, yolo_out:{}, avatars:{}'.format(
+            #     idx, self.frame_q.qsize(),self.yolo_input_q.qsize(),
+            #     self.yolo_output_q.qsize(), self.avatar_q.qsize()))
+
+    def stop(self):
+        self.connector.logger.info('Stopping {}...'.format(self.name))
+        self.break_event.set()
+
+        for w in self.workers:
+            w.join()
+
+        self.connector.logger.info('{} has been stopped!'.format(self.name))
+
+        return True

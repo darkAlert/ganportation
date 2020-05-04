@@ -1,6 +1,6 @@
 import cv2
 import threading
-from queue import Queue, Empty
+from queue import Queue, Empty, Full
 import time
 
 
@@ -63,6 +63,8 @@ class StreamModel(object):
 
     def __init__(self, connector, label=None):
         self.connector = connector
+        self.connector.enable_frame_throw()
+        self.name = 'StreamModel'
 
         # Make queues, events and threads:
         self.break_event = threading.Event()
@@ -74,7 +76,7 @@ class StreamModel(object):
         self.workers.append(threading.Thread(target=send_worker, args=worker_args))
 
     def run(self):
-        self.connector.logger.info('Running stream...')
+        self.connector.logger.info('Running {}...'.format(self.name))
 
         # Run workers:
         for w in self.workers:
@@ -84,16 +86,24 @@ class StreamModel(object):
         _ = self.connector.recv_all_frames()
 
         for idx, frame in enumerate(self.connector.frames()):
+            if self.break_event.is_set():
+                break
+
             if frame is not None:
-                # Put frame in the queue and continue:
                 data = {'frame': frame.copy(), 'start': time.time()}
-                self.frame_q.put(data)
+                self.frame_q.put(data, timeout=0.005)
             else:
-                # Or terminate the process and wait for the workers:
-                self.break_event.set()
-                for w in self.workers:
-                    w.join()
-                self.connector.logger.info('Stream model has been stopped!')
-                return True
+                self.stop()
 
             # print('idx:{}, frames:{}'.format(idx, self.frame_q.qsize()))
+
+    def stop(self):
+        self.connector.logger.info('Stopping {}...'.format(self.name))
+        self.break_event.set()
+
+        for w in self.workers:
+            w.join()
+
+        self.connector.logger.info('{} has been stopped!'.format(self.name))
+
+        return True
