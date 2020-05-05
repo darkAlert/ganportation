@@ -1,3 +1,4 @@
+import sys
 import os
 import cv2
 import threading
@@ -5,6 +6,7 @@ from queue import Queue, Empty, Full
 from holoport.workers import *
 from holoport.conf.conf_parser import parse_conf
 from holoport.hyolo import init_yolo
+from holoport.live import LiveStream
 
 
 def draw_worker(break_event, input_q, output_q, timeout=0.005):
@@ -21,6 +23,7 @@ def draw_worker(break_event, input_q, output_q, timeout=0.005):
         data = post_yolo(data)
 
         if data['yolo_cbbox'] is None:
+            data['avatar'] = data['frame']
             data['not_found'] = True
         else:
             # Draw rectangle:
@@ -59,13 +62,11 @@ def yolo_inference_worker(yolo, break_event, input_q, output_q, timeout=0.005):
 def send_worker(break_event, avatar_q, send_data, send_frame, timeout=0.005):
     print('send_worker has been run...')
 
-    # Make not_found frame:
-    not_found_frame = np.zeros((720, 1280, 3), dtype=np.uint8)
-    text = 'Person not found!'
-    pos = (10, 120)
-    cv2.putText(not_found_frame, text, pos, cv2.FONT_HERSHEY_SIMPLEX, 0.85, (255, 255, 255), 1)
-
+    mean_latency = None
+    mean_fps = None
     start = time.time()
+    prev_frame_start = time.time()
+    mean_wait = None
 
     while not break_event.is_set():
         try:
@@ -74,25 +75,42 @@ def send_worker(break_event, avatar_q, send_data, send_frame, timeout=0.005):
         except Empty:
             continue
 
-        # Measure FPS:
+        # Measure FPS and latency:
         stop = time.time()
         elapsed = stop - start
         start = stop
-        fps = 1000 / elapsed
+
+        fps = 1 / elapsed
+        if mean_fps is None:
+            mean_fps = fps
+        mean_fps = mean_fps*0.9 + fps*0.1
+        latency = stop - data['start']
+        if mean_latency is None:
+            mean_latency = latency
+        mean_latency = mean_latency * 0.9 + latency * 0.1
+        wait =  data['start'] - prev_frame_start
+        if mean_wait is None:
+            mean_wait = wait
+        mean_wait = mean_wait * 0.9 + wait * 0.1
+        prev_frame_start = data['start']
+
+        # Draw:
+        text = 'fps:{:.1f}'.format(mean_fps)
+        cv2.putText(data['avatar'], text, (5, 25), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
+        text = 'lat:{:.1f}'.format(mean_latency * 1000)
+        cv2.putText(data['avatar'], text, (5, 65), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+        text = 'wait:{:.1f}'.format(mean_wait * 1000)
+        cv2.putText(data['avatar'], text, (5, 105), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 0, 0), 2)
 
         if 'not_found' in data:
-            # Send not_found frame:
-            frame = not_found_frame.copy()
-            text = '{:.1f}'.format(fps)
-            cv2.putText(frame, text, (5, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
-            send_data(dict(fps=fps, not_found=True))
-            send_frame(frame)
-        else:
-            # Send the avatar:
-            text = '{:.1f}'.format(fps)
-            cv2.putText(data['avatar'], text, (5, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
-            send_data(dict(fps=fps))
-            send_frame(data['avatar'])
+            h, w = data['avatar'].shape[:2]
+            text = 'Person not found!'
+            pos = (100, int(h/2))
+            cv2.putText(data['avatar'], text, pos, cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 3)
+
+        # Send data:
+        send_data(dict(fps=fps))
+        send_frame(data['avatar'])
 
     print('send_worker has been terminated.')
 
@@ -181,7 +199,7 @@ class YoloModel(object):
                 break
 
             if frame is not None:
-                data = {'frame': frame}
+                data = {'frame': frame.copy(), 'start': time.time()}
                 self.frame_q.put(data, timeout=0.005)
             else:
                 self.stop()
@@ -200,3 +218,17 @@ class YoloModel(object):
         self.connector.logger.info('{} has been stopped!'.format(self.name))
 
         return True
+
+
+def main(path_to_conf):
+    live = LiveStream()
+    live.run_model(YoloModel, path_to_conf=path_to_conf)
+
+if __name__ == '__main__':
+    path_to_conf = 'yolo_conf_azure.yaml'
+    if len(sys.argv) > 1:
+        path_to_conf = sys.argv[1]
+        sys.argv = [sys.argv[0]]
+
+    main(path_to_conf)
+

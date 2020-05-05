@@ -29,7 +29,7 @@ RUN mkdir -p /usr/src/utils ;\
 
 # download vibe_data from Azure Blob Storage
 RUN mkdir -p /usr/src/models ;\
-    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/models/vibe_data.tar.gz?sp=r&st=2020-04-13T14:35:21Z&se=2020-04-30T22:35:21Z&spr=https&sv=2019-02-02&sr=b&sig=%2BLQV9Cl20Ly%2BH6TgApyCsVZwuh50cN3vOdX3Pjzdh%2BA%3D" "/usr/src/models/vibe_data.tar.gz" ;\
+    /usr/src/utils/azcopy copy "https://holoponrtation.blob.core.windows.net/holoportation-rt/models/vibe_data.tar.gz?sp=r&st=2020-04-13T14:35:21Z&se=2020-04-30T22:35:21Z&spr=https&sv=2019-02-02&sr=b&sig=%2BLQV9Cl20Ly%2BH6TgApyCsVZwuh50cN3vOdX3Pjzdh%2BA%3D" "/usr/src/models/vibe_data.tar.gz" ;\
     tar -xvf /usr/src/models/vibe_data.tar.gz -C /usr/src/models ;\
     rm /usr/src/models/vibe_data.tar.gz
 
