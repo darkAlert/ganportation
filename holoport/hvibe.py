@@ -11,6 +11,7 @@ class HoloVibeRT():
     def __init__(self, args):
         self.bbox_scale = args.bbox_scale
         self.crop_size = args.crop_size
+        self.include_verts = args.include_verts
         self.device = torch.device('cuda:' + str(args.gpu_id))
 
         # Init VIBE-RT:
@@ -36,12 +37,16 @@ class HoloVibeRT():
 
             preds = self.vibe_model(frame)[-1]
 
-            return {
+            output = {
                 'pred_cam': preds['theta'][:, :, :3].reshape(1, -1).cpu(),
                 'pose': preds['theta'][:, :, 3:75].reshape(1, -1).cpu(),
                 'betas': preds['theta'][:, :, 75:].reshape(1, -1).cpu(),
                 'rotmat': preds['rotmat'].reshape(1, -1, 3, 3).cpu()
             }
+            if self.include_verts:
+                output['verts'] = preds['verts'].reshape(1, -1, 3).cpu()
+
+            return output
 
 
 def convert_cam(cam, bbox1, bbox2, truncated=True):
@@ -92,6 +97,8 @@ def init_vibe(vibe_conf):
                         help='scale for input bounding box')
     parser.add_argument('--crop_size', type=int, default=224,
                         help='crop size for input image')
+    parser.add_argument('--include_verts', action='store_true', default=False,
+                        help='include smpl vertices to a vibe output')
     args, unknown = parser.parse_known_args()
 
     # Set params:
@@ -103,6 +110,8 @@ def init_vibe(vibe_conf):
     args.j_regressor_path = os.path.join(args.root_dir, args.j_regressor_path)
     args.vibe_model_path = os.path.join(args.root_dir, args.vibe_model_path)
     args.gpu_id = vibe_conf['gpu_id']
+    if 'include_verts' in vibe_conf:
+        args.include_verts = vibe_conf['include_verts']
 
     # Init vibe:
     print('Initializing VIBE...')
@@ -124,13 +133,15 @@ def pre_vibe(data, args):
 
 def post_vibe(data):
     # Prepare VIBE output:
-    avatar_cam = convert_cam(cam=data['vibe_output']['pred_cam'].numpy(),
-                             bbox1=data['yolo_cbbox'],
-                             bbox2=data['scene_cbbox'],
-                             truncated=True)
+    scene_cam = convert_cam(cam=data['vibe_output']['pred_cam'].numpy(),
+                            bbox1=data['yolo_cbbox'],
+                            bbox2=data['scene_cbbox'],
+                            truncated=False)
+    avatar_cam = np.stack([[scene_cam[0,0], scene_cam[0,2], scene_cam[0,3]]])
     smpl_vec = np.concatenate((avatar_cam,
                                data['vibe_output']['pose'].numpy(),
                                data['vibe_output']['betas'].numpy()), axis=1)
+    data['scene_cam'] = scene_cam
     data['smpl_vec'] = smpl_vec
 
     return data

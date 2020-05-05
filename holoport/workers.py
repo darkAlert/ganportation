@@ -28,6 +28,7 @@ def warmup_holoport_pipeline(img, yolo, yolo_args, vibe=None, vibe_args=None, lw
     data = pre_yolo(data, yolo_args)
     data['yolo_output'] = yolo.inference(data['yolo_input'])
     data = post_yolo(data)
+    print('YOLO has been warmed up!')
 
     assert data['yolo_cbbox'] is not None
 
@@ -37,6 +38,7 @@ def warmup_holoport_pipeline(img, yolo, yolo_args, vibe=None, vibe_args=None, lw
     data = pre_vibe(data, vibe_args)
     data['vibe_output'] = vibe.inference(data['vibe_input'])
     data = post_vibe(data)
+    print('VIBE has been warmed up!')
 
     # LWGAN:
     if lwgan is None or lwgan_args is None:
@@ -45,6 +47,7 @@ def warmup_holoport_pipeline(img, yolo, yolo_args, vibe=None, vibe_args=None, lw
     data['lwgan_output'] = lwgan.inference(data['lwgan_input_img'],
                                            data['lwgan_input_smpl'],
                                            data['lwgan_input_view'])
+    print('LWGAN has been warmed up!')
 
     return True
 

@@ -1,0 +1,27 @@
+yolo:
+  cfg_path: '/usr/src/models/yolo_data/yolov3-spp.cfg'
+  weights_path: '/usr/src/models/yolo_data/yolov3-spp-ultralytics.pt'
+  names_path: '/usr/src/models/yolo_data/coco.names'
+  img_size: 512
+  gpu_id: '0'
+  half: False
+
+vibe:
+  root_dir: '/usr/src/models/vibe_data'
+  seqlen: 1
+  scale: 1.1
+  crop_size: 224
+  gpu_id: '0'
+
+input:
+  warmup_img: '/usr/src/data/holovideo/samples/img0.jpeg'
+  frames_dir: '/usr/src/data/holovideo/frames'
+  target_path: 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
+  view: 'R=0,90,0/t=0,0,0'
+  steps: 1
+  scene_bbox: '575,150,850,850'
+
+output:
+  result_dir: '/usr/src/outputs/yolo_vibe/t1'
+
+
