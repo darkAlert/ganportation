@@ -15,23 +15,18 @@ class HoloSmplRenderer():
                                  smpl_model_dir=params['smpl_model_dir'],
                                  joint_regressor_path=params['joint_regressor_path'])
 
-    def render(self, data, resize_to_frame=True):
-        if not 'verts' in data['vibe_output']:
-            # predict vertices if they are missed:
-            raise NotImplementedError
+    def render(self, verts, cam, resize_to=None):
+        if not isinstance(verts, np.ndarray):
+            scene_verts = verts.numpy()[0]
         else:
-            if not isinstance(data['vibe_output']['verts'], np.ndarray):
-                verts = data['vibe_output']['verts'].numpy()[0]
-            else:
-                verts = data['vibe_output']['verts'][0]
+            scene_verts = verts[0]
 
         # Render:
-        cam = data['scene_cam'][0]
+        scenec_cam = cam[0]
         img = np.zeros((self.height,self.width,3), dtype=np.uint8)
-        rendered_smpl = self.renderer.render(img, verts, cam=cam, color=self.mesh_color)
+        rendered_smpl = self.renderer.render(img, scene_verts, cam=scenec_cam, color=self.mesh_color)
 
-        if resize_to_frame:
-            h,w = data['frame'].shape[:2]
-            rendered_smpl = cv2.resize(rendered_smpl, (w, h))
+        if resize_to is not None:
+            rendered_smpl = cv2.resize(rendered_smpl, resize_to)
 
         return rendered_smpl

@@ -11,6 +11,23 @@ from holoport.smpl_renderer import HoloSmplRenderer
 from holoport.live import LiveStream
 
 
+def box_fits_into_scene(bbox, scene_bbox):
+    '''
+    Check if the predicted yolo box fits into the scene box
+    '''
+    scence_x1, scence_x2 = scene_bbox[0], scene_bbox[0] + scene_bbox[2]
+    scence_y1, scence_y2 = scene_bbox[1], scene_bbox[1] + scene_bbox[3]
+    x = bbox[0]+int(round(bbox[2]*0.5))
+    y1, y2 = bbox[1], bbox[1] + bbox[3]
+
+    if y1 < scence_y1 or y2 > scence_y2:
+        return False
+    if x < scence_x1 or x > scence_x2:
+        return False
+
+    return True
+
+
 def renderer_worker(renderer_conf, break_event, input_q, output_q, timeout=0.005):
     print('renderer_worker has been run...')
 
@@ -24,8 +41,24 @@ def renderer_worker(renderer_conf, break_event, input_q, output_q, timeout=0.005
         except Empty:
             continue
 
+        data['avatar'] = data['frame'].copy()
+        scene_bbox = data['scene_bbox'][0]
+
+        # Check if the predicted yolo box fits into the scene box:
+        if 'not_found' not in data and \
+                not box_fits_into_scene(data['yolo_bbox'][0], scene_bbox):
+            data['not_found'] = True
+            # Draw the predicted yolo bbox:
+            bbox = data['yolo_bbox'][0]
+            pt1 = (bbox[0], bbox[1])
+            pt2 = (bbox[0] + bbox[2], bbox[1] + bbox[3])
+            cv2.rectangle(data['avatar'], pt1, pt2, color=(0, 255, 255), thickness=1)
+
         if 'not_found' in data:
-            data['avatar'] = data['frame']
+            # Draw scene rectancgle:
+            pt1 = (scene_bbox[0],scene_bbox[1])
+            pt2 = (scene_bbox[0]+scene_bbox[2], scene_bbox[1]+scene_bbox[3])
+            cv2.rectangle(data['avatar'], pt1, pt2, (0,0,255), thickness=2)
             output_q.put(data)
             continue
 
@@ -33,15 +66,20 @@ def renderer_worker(renderer_conf, break_event, input_q, output_q, timeout=0.005
         data = post_vibe(data)
 
         # Render SMPL:
-        data['rendered_smpl'] = renderer.render(data)
-        data['avatar'] = cv2.bitwise_or(data['frame'], data['rendered_smpl'])
+        if not 'verts' in data['vibe_output']:
+            raise NotImplementedError
+        data['rendered_smpl'] = renderer.render(data['vibe_output']['verts'], data['scene_cam'],
+                                                (scene_bbox[2],scene_bbox[3]))
+        x1, x2 = scene_bbox[0], scene_bbox[0]+scene_bbox[2]
+        y1, y2 = scene_bbox[1], scene_bbox[1] + scene_bbox[3]
+        avatar_crop = cv2.addWeighted(data['avatar'][y1:y2, x1:x2, :], 0.1, data['rendered_smpl'], 0.9, 0)
+        data['avatar'][y1:y2, x1:x2, :] = avatar_crop
 
-
-        # Draw bounding box:
-        bbox = data['yolo_bbox'][0]
+        # Draw scene rectancgle:
+        bbox = data['scene_bbox'][0]
         pt1 = (bbox[0], bbox[1])
-        pt2 = (bbox[0]+bbox[2], bbox[1]+bbox[3])
-        cv2.rectangle(data['avatar'], pt1, pt2, color=(0,0,255), thickness=5)
+        pt2 = (bbox[0] + bbox[2], bbox[1] + bbox[3])
+        cv2.rectangle(data['avatar'], pt1, pt2, (0, 255, 0), thickness=2)
 
         output_q.put(data)
 
@@ -93,12 +131,6 @@ def send_worker(break_event, avatar_q, send_data, send_frame, timeout=0.005):
         text = 'wait:{:.1f}'.format(mean_wait * 1000)
         cv2.putText(data['avatar'], text, (5, 105), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 0, 0), 2)
 
-        if 'not_found' in data:
-            h, w = data['avatar'].shape[:2]
-            text = 'Person not found!'
-            pos = (100, int(h/2))
-            cv2.putText(data['avatar'], text, pos, cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 3)
-
         # Send data:
         send_data(dict(fps=fps))
         send_frame(data['avatar'])
@@ -116,15 +148,15 @@ def generate_aux_params(conf):
     # Dummy scene params:
     t = conf['scene_bbox'].split(',')
     assert len(t) == 4
-    dummy_scene_bbox = np.array([[int(t[0]), int(t[1]), int(t[2]), int(t[3])]], dtype=np.int64)
-    dummy_scene_cbbox = dummy_scene_bbox.copy()
-    dummy_scene_cbbox[:, 0] = dummy_scene_bbox[:, 0] + dummy_scene_bbox[:, 2] * 0.5  # (x,y,w,h) -> (cx,cy,w,h)
-    dummy_scene_cbbox[:, 1] = dummy_scene_bbox[:, 1] + dummy_scene_bbox[:, 3] * 0.5
+    scene_bbox = np.array([[int(t[0]), int(t[1]), int(t[2]), int(t[3])]], dtype=np.int64)
+    scene_cbbox = scene_bbox.copy()
+    scene_cbbox[:, 0] = scene_bbox[:, 0] + scene_bbox[:, 2] * 0.5  # (x,y,w,h) -> (cx,cy,w,h)
+    scene_cbbox[:, 1] = scene_bbox[:, 1] + scene_bbox[:, 3] * 0.5
 
     # Set auxiliary params:
     aux_params = {}
-    aux_params['dummy_scene_bbox'] = dummy_scene_bbox
-    aux_params['dummy_scene_cbbox'] = dummy_scene_cbbox
+    aux_params['scene_bbox'] = scene_bbox
+    aux_params['scene_cbbox'] = scene_cbbox
     aux_params['steps'] = steps
     aux_params['view'] = view
 
@@ -217,7 +249,8 @@ class YoloVibeModel(object):
 
 
 def main(path_to_conf):
-    live = LiveStream()
+    output_dir = None#'/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/vibe_lwgan/live'
+    live = LiveStream(output_dir)
     live.run_model(YoloVibeModel, path_to_conf=path_to_conf)
 
 if __name__ == '__main__':

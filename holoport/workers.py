@@ -56,8 +56,8 @@ def pre_yolo_worker(args, break_event, input_q, output_q, aux_params, timeout=0.
     print('pre_yolo_worker has been run...')
 
     # Parse auxiliary params:
-    dummy_scene_bbox = aux_params['dummy_scene_bbox']
-    dummy_scene_cbbox = aux_params['dummy_scene_cbbox']
+    dummy_scene_bbox = aux_params['scene_bbox']
+    dummy_scene_cbbox = aux_params['scene_cbbox']
     steps = aux_params['steps']
     view = aux_params['view']
     delta = 360 / steps        # view changing params
