@@ -38,7 +38,7 @@ input:
   frames_dir: '/home/username/HoloVideo/Data/frames'
   target_path: 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
   view: 'R=0,90,0/t=0,0,0'
-  steps: 120
+  steps: 1
   scene_bbox: '575,150,850,850'
 
 output:

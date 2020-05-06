@@ -1,0 +1,36 @@
+yolo:
+  cfg_path: '/home/username/builds/yolov3/yolort/cfg/yolov3-spp.cfg'
+  weights_path: '/home/username/builds/yolov3/yolort/weights/yolov3-spp-ultralytics.pt'
+  names_path: '/home/username/builds/yolov3/yolort/data/coco.names'
+  img_size: 512
+  gpu_id: '0'
+  half: False
+
+vibe:
+  root_dir: '/home/username/builds/VibeRT/vibert/data/vibe_data'
+  seqlen: 1
+  scale: 1.1
+  crop_size: 224
+  include_verts: True
+  gpu_id: '0'
+
+renderer:
+  smpl_model_dir: '/home/darkalert/builds/VibeRT/vibert/data/vibe_data'
+  joint_regressor_path: '/home/darkalert/builds/VibeRT/vibert/data/vibe_data/J_regressor_extra.npy'
+  gender: 'neutral'
+  width: 200
+  height: 200
+  wireframe: False
+
+input:
+  warmup_img: '/home/username/holoportrt/holoport/tests/samples/img0.jpeg'
+  frames_dir: '/home/username/HoloVideo/Data/frames'
+  target_path: 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
+  view: 'R=0,90,0/t=0,0,0'
+  steps: 1
+  scene_bbox: '300,20,680,680'
+
+output:
+  result_dir: '/home/username/HoloVideo/Data/output/yolo_vibe/t1'
+
+
