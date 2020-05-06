@@ -29,25 +29,25 @@ RUN mkdir -p /usr/src/utils ;\
 
 # download vibe_data from Azure Blob Storage
 RUN mkdir -p /usr/src/models ;\
-    /usr/src/utils/azcopy copy "https://holoponrtation.blob.core.windows.net/holoportation-rt/models/vibe_data.tar.gz?sp=r&st=2020-04-13T14:35:21Z&se=2020-04-30T22:35:21Z&spr=https&sv=2019-02-02&sr=b&sig=%2BLQV9Cl20Ly%2BH6TgApyCsVZwuh50cN3vOdX3Pjzdh%2BA%3D" "/usr/src/models/vibe_data.tar.gz" ;\
+    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/models/vibe_data.tar.gz?sp=rl&st=2020-05-06T15:15:19Z&se=2020-06-30T15:15:00Z&sv=2019-10-10&sr=b&sig=UW8aiEEC3ZmReT%2FJ4x6DDGHmMAlGneb8jcO2M%2BMJCk8%3D" "/usr/src/models/vibe_data.tar.gz" ;\
     tar -xvf /usr/src/models/vibe_data.tar.gz -C /usr/src/models ;\
     rm /usr/src/models/vibe_data.tar.gz
 
 # download yolo_data from Azure Blob Storage
 RUN mkdir -p /usr/src/models ;\
-    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/models/yolo_data.tar.gz?sp=rl&st=2020-05-04T14:09:21Z&se=2020-05-31T14:09:00Z&sv=2019-10-10&sr=b&sig=4aFn2t4%2BXVXxUT6KOnhjQfWYCIPKMGpRD8Z8gKJ%2B6is%3D" "/usr/src/models/yolo_data.tar.gz" ;\
+    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/models/yolo_data.tar.gz?sp=rl&st=2020-05-06T15:18:10Z&se=2020-06-30T15:18:00Z&sv=2019-10-10&sr=b&sig=FLB4s5ZCWhWdxgXPxt%2FI1tExuvzDlNJbyZZ%2B1QVMDso%3D" "/usr/src/models/yolo_data.tar.gz" ;\
     tar -xvf /usr/src/models/yolo_data.tar.gz -C /usr/src/models ;\
     rm /usr/src/models/yolo_data.tar.gz
 
 # download lwgan_data from Azure Blob Storage
 RUN mkdir -p /usr/src/models ;\
-    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/models/lwgan_data.tar.gz?sp=rl&st=2020-05-04T14:08:13Z&se=2020-05-31T14:08:00Z&sv=2019-10-10&sr=b&sig=v2O7c2BzIo9t52CCpzatcKgPysX2Lup2qtlXSTlGcBo%3D" "/usr/src/models/lwgan_data.tar.gz" ;\
+    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/models/lwgan_data.tar.gz?sp=rl&st=2020-05-06T15:19:31Z&se=2020-06-30T15:19:00Z&sv=2019-10-10&sr=b&sig=dVgBC1SQ99A2uEDY%2F7LDTQLsRmZ3wlXMjB9pAjwuA88%3D" "/usr/src/models/lwgan_data.tar.gz" ;\
     tar -xvf /usr/src/models/lwgan_data.tar.gz -C /usr/src/models ;\
     rm /usr/src/models/lwgan_data.tar.gz
 
 # download holovideo from Azure Blob Storage
 RUN mkdir -p /usr/src/data ;\
-    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/data/holovideo.tar.gz?sp=rl&st=2020-05-04T14:09:51Z&se=2020-05-31T14:09:00Z&sv=2019-10-10&sr=b&sig=Ny6HjsP7jnwoAF37BYuFo%2BGrLC95C3U2q421NQ10uSg%3D" "/usr/src/data/holovideo.tar.gz" ;\
+    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/data/holovideo.tar.gz?sp=rl&st=2020-05-06T15:20:15Z&se=2020-06-30T15:20:00Z&sv=2019-10-10&sr=b&sig=9mLRN%2Ftv%2FSxftJUrGt0W2yhegiV6zQUkAEtgSwLIZog%3D" "/usr/src/data/holovideo.tar.gz" ;\
     tar -xvf /usr/src/data/holovideo.tar.gz -C /usr/src/data ;\
     rm /usr/src/data/holovideo.tar.gz
 
