@@ -1,0 +1,47 @@
+yolo:
+  cfg_path: '/usr/src/models/yolo_data/yolov3-spp.cfg'
+  weights_path: '/usr/src/models/yolo_data/yolov3-spp-ultralytics.pt'
+  names_path: '/usr/src/models/yolo_data/coco.names'
+  img_size: 512
+  gpu_id: '0'
+  half: False
+
+vibe:
+  root_dir: '/usr/src/models/vibe_data'
+  seqlen: 1
+  scale: 1.1
+  crop_size: 224
+  gpu_id: '0'
+
+lwgan:
+  gen_name: "holoportator"
+  image_size: 256
+  bg_ks: 11
+  ft_ks: 3
+  has_detector: False
+  post_tune: False
+  front_warp: False
+  save_res: False
+  n_threads_test: 4
+  load_path: '/usr/src/models/lwgan_data/net_epoch_20_id_G.pth'
+  smpl_model: '/usr/src/models/lwgan_data/smpl_model.pkl'
+  hmr_model: '/usr/src/models/lwgan_data/hmr_tf2pt.pth'
+  smpl_faces: '/usr/src/models/lwgan_data/smpl_faces.npy'
+  uv_mapping: '/usr/src/models/lwgan_data/mapper.txt'
+  part_info: '/usr/src/models/lwgan_data/smpl_part_info.json'
+  front_info: '/usr/src/models/lwgan_data/front_facial.json'
+  head_info: '/usr/src/models/lwgan_data/head.json'
+  gpu_ids: '1'
+
+input:
+  warmup_img: '/usr/src/data/holovideo/samples/img0.jpeg'
+  frames_dir: '/usr/src/data/holovideo/frames'
+  target_path: 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
+  view: 'R=0,90,0/t=0,0,0'
+  steps: 1
+  scene_bbox: '300,20,680,680'
+
+output:
+  result_dir: '/usr/src/outputs/yolo_vibe_lwgan/t1'
+
+

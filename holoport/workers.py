@@ -6,6 +6,23 @@ from holoport.hvibe import pre_vibe, post_vibe
 from holoport.hyolo import pre_yolo, post_yolo
 
 
+def box_fits_into_scene(bbox, scene_bbox):
+    '''
+    Check if the predicted yolo box fits into the scene box
+    '''
+    scence_x1, scence_x2 = scene_bbox[0], scene_bbox[0] + scene_bbox[2]
+    scence_y1, scence_y2 = scene_bbox[1], scene_bbox[1] + scene_bbox[3]
+    x = bbox[0]+int(round(bbox[2]*0.5))
+    y1, y2 = bbox[1], bbox[1] + bbox[3]
+
+    if y1 < scence_y1 or y2 > scence_y2:
+        return False
+    if x < scence_x1 or x > scence_x2:
+        return False
+
+    return True
+
+
 def warmup_holoport_pipeline(img, yolo, yolo_args, vibe=None, vibe_args=None, lwgan=None, lwgan_args=None):
     print('Warming up holoport pipeline...')
     assert img is not None
@@ -93,7 +110,7 @@ def pre_yolo_worker(args, break_event, input_q, output_q, aux_params, timeout=0.
     return True
 
 
-def pre_vibe_worker(args, break_event, input_q, output_q, timeout=0.005):
+def pre_vibe_worker(args, break_event, input_q, output_q, timeout=0.005, scene_fitting=False):
     print('pre_vibe_worker has been run...')
 
     while not break_event.is_set():
@@ -110,6 +127,12 @@ def pre_vibe_worker(args, break_event, input_q, output_q, timeout=0.005):
             data['not_found'] = True
             output_q.put(data)
             continue
+
+        if scene_fitting:
+            if not box_fits_into_scene(data['yolo_bbox'][0], data['scene_bbox'][0]):
+                data['not_found'] = True
+                output_q.put(data)
+                continue
 
         # Prepare VIBE input:
         data = pre_vibe(data, args)

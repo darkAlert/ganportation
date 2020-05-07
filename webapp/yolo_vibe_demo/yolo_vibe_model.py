@@ -7,7 +7,7 @@ from holoport.workers import *
 from holoport.conf.conf_parser import parse_conf
 from holoport.hyolo import init_yolo
 from holoport.hvibe import init_vibe
-from holoport.smpl_renderer import TrimeshSmplRenderer, NeuralSmplRenderer
+from holoport.smpl_renderer import NeuralSmplRenderer
 from holoport.live import LiveStream
 
 
@@ -32,10 +32,10 @@ def renderer_worker(renderer_conf, break_event, input_q, output_q, timeout=0.005
     print('renderer_worker has been run...')
 
     # Init renderer (need toinitialize in this thread)
-    if renderer_conf['type'] == 'TrimeshSmplRenderer':
-        renderer = TrimeshSmplRenderer(renderer_conf)
-        print ('TrimeshSmplRenderer is used.')
-    elif renderer_conf['type'] == 'NeuralSmplRenderer':
+    # if renderer_conf['type'] == 'TrimeshSmplRenderer':
+    #     renderer = TrimeshSmplRenderer(renderer_conf)
+    #     print ('TrimeshSmplRenderer is used.')
+    if renderer_conf['type'] == 'NeuralSmplRenderer':
         renderer = NeuralSmplRenderer(renderer_conf)
         print('NeuralSmplRenderer is used.')
 
@@ -254,12 +254,12 @@ class YoloVibeModel(object):
 
 
 def main(path_to_conf):
-    output_dir = None#'/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/vibe_lwgan/live'
+    output_dir = None#'/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/yolo_vibe/live'
     live = LiveStream(output_dir)
     live.run_model(YoloVibeModel, path_to_conf=path_to_conf)
 
 if __name__ == '__main__':
-    path_to_conf = 'yolo_vibe_conf_azure.yaml'
+    path_to_conf = 'yolo-vibe-nr_live.yaml'
     if len(sys.argv) > 1:
         path_to_conf = sys.argv[1]
         sys.argv = [sys.argv[0]]
