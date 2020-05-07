@@ -7,7 +7,7 @@ from holoport.workers import *
 from holoport.conf.conf_parser import parse_conf
 from holoport.hyolo import init_yolo
 from holoport.hvibe import init_vibe
-from holoport.smpl_renderer import HoloSmplRenderer
+from holoport.smpl_renderer import TrimeshSmplRenderer, NeuralSmplRenderer
 from holoport.live import LiveStream
 
 
@@ -32,7 +32,12 @@ def renderer_worker(renderer_conf, break_event, input_q, output_q, timeout=0.005
     print('renderer_worker has been run...')
 
     # Init renderer (need toinitialize in this thread)
-    renderer = HoloSmplRenderer(renderer_conf)
+    if renderer_conf['type'] == 'TrimeshSmplRenderer':
+        renderer = TrimeshSmplRenderer(renderer_conf)
+        print ('TrimeshSmplRenderer is used.')
+    elif renderer_conf['type'] == 'NeuralSmplRenderer':
+        renderer = NeuralSmplRenderer(renderer_conf)
+        print('NeuralSmplRenderer is used.')
 
     while not break_event.is_set():
         try:
@@ -70,7 +75,7 @@ def renderer_worker(renderer_conf, break_event, input_q, output_q, timeout=0.005
             raise NotImplementedError
         data['rendered_smpl'] = renderer.render(data['vibe_output']['verts'], data['scene_cam'],
                                                 (scene_bbox[2],scene_bbox[3]))
-        x1, x2 = scene_bbox[0], scene_bbox[0]+scene_bbox[2]
+        x1, x2 = scene_bbox[0], scene_bbox[0] + scene_bbox[2]
         y1, y2 = scene_bbox[1], scene_bbox[1] + scene_bbox[3]
         avatar_crop = cv2.addWeighted(data['avatar'][y1:y2, x1:x2, :], 0.1, data['rendered_smpl'], 0.9, 0)
         data['avatar'][y1:y2, x1:x2, :] = avatar_crop
