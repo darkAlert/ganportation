@@ -47,20 +47,14 @@ def send_worker(break_event, avatar_q, send_data, send_frame, timeout=0.005):
         prev_frame_start = data['start']
 
         # Draw:
-        text = 'fps:{:.1f}'.format(mean_fps)
-        cv2.putText(data['avatar'], text, (5, 25), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
-        text = 'lat:{:.1f}'.format(mean_latency * 1000)
-        cv2.putText(data['avatar'], text, (5, 65), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
-        text = 'wait:{:.1f}'.format(mean_wait * 1000)
-        cv2.putText(data['avatar'], text, (5, 105), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 0, 0), 2)
-
-        # Draw scene area:
         scene_bbox = data['scene_bbox'][0]
         pt1 = (scene_bbox[0], scene_bbox[1])
         pt2 = (scene_bbox[0] + scene_bbox[2], scene_bbox[1] + scene_bbox[3])
         if 'not_found' in data:
+            # Draw scene area:
             data['avatar'] = data['frame']
             cv2.rectangle(data['avatar'], pt1, pt2, (0,0,255), thickness=2)
+
             if data['yolo_bbox'] is not None:
                 # Draw the predicted yolo bbox:
                 bbox = data['yolo_bbox'][0]
@@ -68,13 +62,24 @@ def send_worker(break_event, avatar_q, send_data, send_frame, timeout=0.005):
                 pt2 = (bbox[0] + bbox[2], bbox[1] + bbox[3])
                 cv2.rectangle(data['avatar'], pt1, pt2, color=(0, 255, 255), thickness=1)
         else:
-            cv2.rectangle(data['avatar'], pt1, pt2, (0, 255, 0), thickness=2)
             # Draw avatar:
             x1, x2 = scene_bbox[0], scene_bbox[0] + scene_bbox[2]
             y1, y2 = scene_bbox[1], scene_bbox[1] + scene_bbox[3]
+            data['avatar'] = cv2.resize(data['avatar'], (scene_bbox[2],scene_bbox[3]))
             avatar_crop = cv2.addWeighted(data['frame'][y1:y2, x1:x2, :], 0.1, data['avatar'], 0.9, 0)
             data['avatar'] = data['frame']
             data['avatar'][y1:y2, x1:x2, :] = avatar_crop
+
+            # Draw scene area:
+            cv2.rectangle(data['avatar'], pt1, pt2, (0, 255, 0), thickness=2)
+
+        # Draw info (fps and etc.):
+        text = 'fps:{:.1f}'.format(mean_fps)
+        cv2.putText(data['avatar'], text, (5, 25), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
+        text = 'lat:{:.1f}'.format(mean_latency * 1000)
+        cv2.putText(data['avatar'], text, (5, 65), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+        text = 'wait:{:.1f}'.format(mean_wait * 1000)
+        cv2.putText(data['avatar'], text, (5, 105), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 0, 0), 2)
 
         # Send data:
         send_data(dict(fps=fps))

@@ -173,7 +173,7 @@ class YoloVibeModel(object):
     SENDS_VIDEO = True
     SENDS_DATA = True
 
-    def __init__(self, connector, label=None, path_to_conf='yolo_conf_azure.yaml'):
+    def __init__(self, connector, label=None, path_to_conf='yolo-vibe-nr_live.yaml'):
         self.connector = connector
         self.connector.enable_frame_throw()
         self.name = 'YoloVibeModel'
