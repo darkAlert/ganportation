@@ -7,6 +7,7 @@ yolo:
   half: False
 
 input:
+  warmup_img: '/usr/src/data/holovideo/samples/img0.jpeg'
   frames_dir: '/usr/src/data/holovideo/frames'
   target_path: 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
 

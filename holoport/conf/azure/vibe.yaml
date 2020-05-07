@@ -6,6 +6,7 @@ vibe:
   gpu_id: '0'
 
 input:
+  warmup_img: '/usr/src/data/holovideo/samples/img0.jpeg'
   frames_dir: '/usr/src/data/holovideo/frames'
   yolo_bboxes_dir: '/usr/src/data/holovideo/bboxes_by_maskrcnn'
   avatar_bboxes_dir: '/usr/src/data/holovideo/bboxes'
