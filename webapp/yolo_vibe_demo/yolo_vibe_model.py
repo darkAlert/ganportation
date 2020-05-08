@@ -169,7 +169,7 @@ def generate_aux_params(conf):
 
 
 class YoloVibeModel(object):
-    LABEL = ['yolo-vibe-nr']
+    LABEL = ['yolo-vibe-nr_live']
     SENDS_VIDEO = True
     SENDS_DATA = True
 

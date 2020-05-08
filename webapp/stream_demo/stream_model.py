@@ -57,7 +57,7 @@ def send_worker(break_event, frame_q, send_data, send_frame, timeout=0.005):
 
 
 class StreamModel(object):
-    LABEL = ['stream_realtime']
+    # LABEL = ['stream_realtime']  # ignore the model
     SENDS_VIDEO = True
     SENDS_DATA = True
 

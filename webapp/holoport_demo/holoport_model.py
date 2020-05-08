@@ -114,11 +114,11 @@ def generate_aux_params(conf):
 
 
 class HoloportModel(object):
-    LABEL = ['holoport_live']
+    LABEL = ['holoport_live']  # ignore the model
     SENDS_VIDEO = True
     SENDS_DATA = True
 
-    def __init__(self, connector, label=None, path_to_conf='yolo_conf_azure.yaml'):
+    def __init__(self, connector, label=None, path_to_conf='yolo-vibe-lwgan_live.yaml'):
         self.connector = connector
         self.connector.enable_frame_throw()
         self.name = 'HoloportModel'
