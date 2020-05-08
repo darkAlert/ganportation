@@ -193,8 +193,9 @@ class HoloportModel(object):
         _ = self.connector.recv_all_frames()
 
         for idx, frame in enumerate(self.connector.frames()):
-            # if idx % 2 == 0:
-                # continue
+            if idx % 2 == 0:
+                _ = self.connector.recv_all_frames()
+                continue
 
             if self.break_event.is_set():
                 break
