@@ -10,16 +10,34 @@ class HoloLwganRT:
         assert torch.cuda.is_available()
         self.device = torch.device('cuda:' + str(args.gpu_ids))
         self.holoport_model = HoloportatorRT(args, device=self.device)
+        self.personalized = False
+        self.desc_frame = None
+        self.desc_smpl = None
+        self.mode = 'view'
+
+    def load_descriptor(self,img_path, smpl_path):
+        self.desc_frame = torch.load(img_path).to(self.device)
+        self.desc_smpl = torch.load(smpl_path).to(self.device)
+        self.mode = 'predefined'
 
     def inference(self, frame, smpl, view):
         frame = frame.to(self.device)
         smpl = smpl.to(self.device)
 
         # Personalize model:
-        self.holoport_model.personalize(frame, smpl)
+        if self.personalized == False:
+            if self.desc_frame is not None:
+                frame = self.desc_frame
+                smpl = self.desc_smpl
+                self.holoport_model.personalize(frame, smpl)
+                self.personalized = True
+            self.holoport_model.personalize(frame, smpl)
 
         # Inference:
-        preds = self.holoport_model.view(view['R'], view['t'])
+        if self.mode == 'view':
+            preds = self.holoport_model.view(view['R'], view['t'])
+        else:
+            preds = self.holoport_model.inference(smpl)
 
         return preds
 

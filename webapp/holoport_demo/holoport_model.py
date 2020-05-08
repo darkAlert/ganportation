@@ -114,7 +114,7 @@ def generate_aux_params(conf):
 
 
 class HoloportModel(object):
-    LABEL = ['holoport_live']  # ignore the model
+    LABEL = ['holoport_live', 'holoport_andrey', 'holoport_yulia']  # ignore the model
     SENDS_VIDEO = True
     SENDS_DATA = True
 
@@ -132,6 +132,16 @@ class HoloportModel(object):
         self.yolo, self.yolo_args = init_yolo(conf['yolo'])
         self.vibe, self.vibe_args = init_vibe(conf['vibe'])
         self.lwgan, self.lwgan_args = init_lwgan(conf['lwgan'])
+        if label is not None:
+            if label == 'holoport_andrey':
+                img_path = os.path.join(os.path.dirname(__file__), 'assets/andrey_260_img.tensor')
+                smpl_path = os.path.join(os.path.dirname(__file__), 'assets/andrey_260_smpl.tensor')
+                self.lwgan.load_descriptor(img_path,smpl_path)
+                self.lwgan.desc_smpl = self.lwgan.desc_smpl[0]
+            elif label == 'holoport_yulia':
+                img_path = os.path.join(os.path.dirname(__file__), 'assets/yulia_166_img.tensor')
+                smpl_path = os.path.join(os.path.dirname(__file__), 'assets/yulia_166_smpl.tensor')
+                self.lwgan.load_descriptor(img_path,smpl_path)
 
         # Warmup:
         if 'warmup_img' in conf['input']:
@@ -208,9 +218,9 @@ class HoloportModel(object):
 
 
 def main(path_to_conf):
-    output_dir = None#'/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/yolo_vibe_lwgan/live'
+    output_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/holoport/live'
     live = LiveStream(output_dir)
-    live.run_model(HoloportModel, path_to_conf=path_to_conf)
+    live.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_andrey')
 
 if __name__ == '__main__':
     path_to_conf = 'yolo-vibe-lwgan.yaml'
