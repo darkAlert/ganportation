@@ -193,8 +193,8 @@ class HoloportModel(object):
         _ = self.connector.recv_all_frames()
 
         for idx, frame in enumerate(self.connector.frames()):
-            if idx % 2 == 0:
-                continue
+            # if idx % 2 == 0:
+                # continue
 
             if self.break_event.is_set():
                 break
@@ -218,7 +218,7 @@ class HoloportModel(object):
 
 
 def main(path_to_conf):
-    output_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/holoport/live'
+    output_dir = None#'/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/holoport/live'
     live = LiveStream(output_dir)
     live.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_andrey')
 
