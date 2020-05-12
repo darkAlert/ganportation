@@ -29,7 +29,6 @@ class HoloLwganRT:
             if self.desc_frame is not None:
                 frame = self.desc_frame
                 smpl = self.desc_smpl
-                self.holoport_model.personalize(frame, smpl)
                 self.personalized = True
             self.holoport_model.personalize(frame, smpl)
 
@@ -38,6 +37,27 @@ class HoloLwganRT:
             preds = self.holoport_model.view(view['R'], view['t'])
         else:
             preds = self.holoport_model.inference(smpl)
+
+        return preds[0]
+
+    def inference_batch(self, frames, smpls):
+        assert len(frames) == len(smpls)
+        frame_batch = torch.cat(frames, dim=0).to(self.device)
+        smpl_batch = torch.cat(smpls, dim=0).to(self.device)
+
+        # Personalize model:
+        if self.personalized == False:
+            if self.desc_frame is not None:
+                frame_batch = torch.cat([self.desc_frame], dim=0).to(self.device)
+                smpl_batch = torch.cat([self.desc_smpl], dim=0).to(self.device)
+                self.personalized = True
+            self.holoport_model.personalize(frame_batch, smpl_batch)
+
+        # Inference:
+        if self.mode == 'view':
+            raise NotImplementedError
+        else:
+            preds = self.holoport_model.inference(smpl_batch)
 
         return preds
 

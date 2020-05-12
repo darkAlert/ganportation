@@ -223,7 +223,6 @@ def yolo_vibe_inference_worker(yolo, vibe, break_event, yolo_input_q, yolo_outpu
 
     return True
 
-
 def lwgan_inference_worker(lwgan, break_event, input_q, output_q, timeout=0.005, skip_frames=False):
     print('lwgan_inference_worker has been run...')
 
@@ -253,8 +252,46 @@ def lwgan_inference_worker(lwgan, break_event, input_q, output_q, timeout=0.005,
         data['lwgan_output'] = lwgan.inference(data['lwgan_input_img'],
                                                data['lwgan_input_smpl'],
                                                data['lwgan_input_view'])
+
         output_q.put(data)
 
     print('lwgan_inference_worker has been terminated.')
+
+    return True
+
+def lwgan_batch_inference_worker(lwgan, break_event, input_q, output_q, timeout=0.001, batch_size=2):
+    '''
+    NOT IMPLEMENTED YET ...
+    '''
+    raise NotImplementedError
+    print('lwgan_batch_inference_worker has been run...')
+
+    while not break_event.is_set():
+        data_batch = []
+
+        for i in range(batch_size):
+            try:
+                data = input_q.get(timeout=timeout)
+                input_q.task_done()
+                data_batch.append(data)
+            except Empty:
+                pass
+
+        # LWGAN batch inference:
+        if len(data_batch) > 0:
+            frames = [data['lwgan_input_img'] for data in data_batch if 'not_found' not in data]
+            smpls = [data['lwgan_input_smpl'] for data in data_batch if 'not_found' not in data]
+            if len(frames) > 0:
+                preds = lwgan.inference_batch(frames, smpls)
+            else:
+                preds = []
+            idx = 0
+            for data in data_batch:
+                if 'not_found' not in data:
+                    data['lwgan_output'] = preds[idx]
+                    idx += 1
+                output_q.put(data)
+
+    print('lwgan_batch_inference_worker has been terminated.')
 
     return True
