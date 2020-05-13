@@ -22,6 +22,8 @@ RUN set -xue ;\
     ;\
     rm -rf /var/lib/apt/lists/*
 
+RUN pip3 install --upgrade pip
+
 # download AzCopy utility
 RUN mkdir -p /usr/src/utils ;\
     wget -O /usr/src/utils/azcopy_linux.tar.gz https://aka.ms/downloadazcopy-v10-linux ;\
