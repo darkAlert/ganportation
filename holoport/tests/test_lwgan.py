@@ -180,6 +180,74 @@ def test_batch(path_to_conf, batch_size=2, save_results=False):
 
     print ('All done!')
 
+
+def test_adaptive_personalization(path_to_conf, save_results=False, train_size=50):
+    # Load config:
+    conf = parse_conf(path_to_conf)
+    print ('Config has been loaded from', path_to_conf)
+
+    # Init LWGAN-RT model:
+    lwgan, args = init_lwgan(conf['lwgan'])
+    lwgan.mode = 'predefined'
+
+    # Load test data:
+    target_path = conf['input']['target_path']
+    frames_dir = os.path.join(conf['input']['frames_dir'], target_path)
+    smpls_dir = os.path.join(conf['input']['smpls_dir'], target_path)
+    print('Loading test data...')
+    test_data = load_data(frames_dir, smpls_dir, args.image_size)
+    print('Test data has been loaded:', len(test_data))
+
+    # Adaptive personalization:
+    frames, smpls = [], []
+    print('Running adaptive_personalization...')
+    train_size = min(train_size, len(test_data))
+    for idx, data in enumerate(test_data):
+        if idx >= train_size:
+            break
+        frames.append(data['lwgan_input'])
+        smpls.append(data['smpl'])
+    lwgan.run_adaptive_personalization(frames, smpls)
+
+    # Inference:
+    print('Inferencing...')
+    steps = conf['input']['steps']
+    view = parse_view_params(conf['input']['view'])
+    delta = 360 / steps
+    step_i = 0
+    results = []
+    start = time.time()
+
+    for data in test_data:
+        view['R'][0] = 0
+        view['R'][1] = delta * step_i / 180.0 * np.pi
+        view['R'][2] = 0
+
+        step_i += 1
+        if step_i >= steps:
+            step_i = 0
+
+        preds = lwgan.inference(data['lwgan_input'], data['smpl'], view)
+        results.append(preds)
+
+    elapsed = time.time() - start
+    fps = len(test_data) / elapsed
+    spf = elapsed / len(test_data)  # secons per frame
+    print('###Elapsed time:', elapsed, 'frames:', len(test_data), 'fps:', fps, 'spf:', spf)
+
+    # Save the results:
+    result_dir = conf['output']['result_dir']
+    if save_results and result_dir is not None:
+        print ('Saving the results to', result_dir)
+        if not os.path.exists(result_dir):
+            os.makedirs(result_dir)
+        for idx, preds in enumerate(results):
+            out_path = os.path.join(result_dir, str(idx).zfill(5) + '.jpeg')
+            save_cv2_img(preds, out_path, normalize=True)
+
+    print ('All done!')
+
+
 if __name__ == '__main__':
     path_to_conf = 'holoport/conf/local/lwgan_conf_local.yaml'
     if len(sys.argv) > 1:
@@ -187,5 +255,6 @@ if __name__ == '__main__':
         sys.argv = [sys.argv[0]]
 
 
-    test_batch(path_to_conf, batch_size=2, save_results=True)
+    # test_batch(path_to_conf, batch_size=2, save_results=True)
     # test(path_to_conf, save_results=False)
+    test_adaptive_personalization(path_to_conf, save_results=True)

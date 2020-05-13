@@ -4,6 +4,7 @@ import cv2
 from lwganrt.models.holoportator_rt import HoloportatorRT
 from lwganrt.options.test_options import TestOptions
 from lwganrt.models.holoportator_rt import prepare_input as prepare_lwgan_input
+from lwganrt.models.adaptive_personalization_rt import adaptive_personalize
 
 class HoloLwganRT:
     def __init__(self, args, warmup=True):
@@ -20,7 +21,7 @@ class HoloLwganRT:
         self.desc_smpl = torch.load(smpl_path).to(self.device)
         self.mode = 'predefined'
 
-    def inference(self, frame, smpl, view):
+    def inference(self, frame, smpl, view=None):
         frame = frame.to(self.device)
         smpl = smpl.to(self.device)
 
@@ -34,13 +35,14 @@ class HoloLwganRT:
 
         # Inference:
         if self.mode == 'view':
+            assert view is not None
             preds = self.holoport_model.view(view['R'], view['t'])
         else:
             preds = self.holoport_model.inference(smpl)
 
         return preds[0]
 
-    def inference_batch(self, frames, smpls):
+    def inference_batch(self, frames, smpls, views=None):
         assert len(frames) == len(smpls)
         frame_batch = torch.cat(frames, dim=0).to(self.device)
         smpl_batch = torch.cat(smpls, dim=0).to(self.device)
@@ -55,11 +57,29 @@ class HoloLwganRT:
 
         # Inference:
         if self.mode == 'view':
+            assert views is not None
             raise NotImplementedError
         else:
             preds = self.holoport_model.inference(smpl_batch)
 
         return preds
+
+    def run_adaptive_personalization(self, frames, smpls):
+        assert len(frames) == len(smpls)
+
+        # Train options:
+        opt = TestOptions().parse()
+        opt.bg_ks = 25
+        opt.front_warp = False
+        opt.post_tune = True
+        opt.output_dir = './outputs/results/demos/imitators'
+        opt.src_path = 'src_img_path'
+
+        # Personalize (train):
+        adaptive_personalize(opt, self.holoport_model, frames, smpls)
+        self.personalized = True
+
+        return self.personalized
 
 
 def parse_view_params(view_params):
