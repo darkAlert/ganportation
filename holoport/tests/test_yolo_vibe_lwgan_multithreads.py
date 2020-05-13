@@ -54,8 +54,8 @@ def test_multithreads(path_to_conf, save_results=True, realtime_ms=None):
 
     # Set auxiliary params:
     aux_params = {}
-    aux_params['dummy_scene_bbox'] = dummy_scene_bbox
-    aux_params['dummy_scene_cbbox'] = dummy_scene_cbbox
+    aux_params['scene_bbox'] = dummy_scene_bbox
+    aux_params['scene_cbbox'] = dummy_scene_cbbox
     aux_params['steps'] = steps
     aux_params['view'] = view
 
