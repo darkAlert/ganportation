@@ -22,7 +22,7 @@ RUN set -xue ;\
     ;\
     rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install --upgrade pip
+RUN pip3 install --upgrade pip==20.0.2
 
 # download AzCopy utility
 RUN mkdir -p /usr/src/utils ;\
