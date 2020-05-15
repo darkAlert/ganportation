@@ -118,12 +118,17 @@ class HoloportModel(object):
     SENDS_VIDEO = True
     SENDS_DATA = True
 
-    def __init__(self, connector, label=None, path_to_conf='yolo-vibe-lwgan_live.yaml'):
+    def __init__(self, connector, label=None, path_to_conf=None):
         self.connector = connector
         self.connector.enable_frame_throw()
         self.name = 'HoloportModel'
 
         # Load config:
+        if path_to_conf is None:
+            if label is not None and label == 'holoport_adaptive':
+                path_to_conf = 'yolo-vibe-lwgan_adaptive.yaml'
+            else:
+                path_to_conf = 'yolo-vibe-lwgan_live.yaml'
         path_to_conf = os.path.join(os.path.dirname(__file__), path_to_conf)
         conf = parse_conf(path_to_conf)
         self.connector.logger.info('Config has been loaded from {}'.format(path_to_conf))
@@ -358,7 +363,7 @@ def main(path_to_conf):
     live.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_adaptive')
 
 if __name__ == '__main__':
-    path_to_conf = 'yolo-vibe-lwgan.yaml'
+    path_to_conf = 'yolo-vibe-lwgan_live.yaml'
     if len(sys.argv) > 1:
         path_to_conf = sys.argv[1]
         sys.argv = [sys.argv[0]]

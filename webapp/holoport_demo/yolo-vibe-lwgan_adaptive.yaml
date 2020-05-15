@@ -3,7 +3,7 @@ yolo:
   weights_path: '/usr/src/models/yolo_data/yolov3-spp-ultralytics.pt'
   names_path: '/usr/src/models/yolo_data/coco.names'
   img_size: 512
-  gpu_id: '0'
+  gpu_id: '1'
   half: False
 
 vibe:
@@ -11,7 +11,7 @@ vibe:
   seqlen: 1
   scale: 1.1
   crop_size: 224
-  gpu_id: '0'
+  gpu_id: '1'
 
 lwgan:
   gen_name: "holoportator"
@@ -33,6 +33,13 @@ lwgan:
   head_info: '/usr/src/models/lwgan_data/head.json'
   face_model: '/usr/src/models/lwgan_data/sphere20a_20171020.pth'
   gpu_ids: '0'
+
+adaptive:
+  uv_mapping: '/usr/src/models/lwgan_data/mapper.txt'
+  pri_path: '/usr/src/data/adaptive/dymmy_img.jpeg'
+  pri_smpl_path: '/usr/src/data/adaptive/smpls.pkl'
+  output_dir: '/usr/src/app/outputs/adaptive_train/1'
+  batch_size: 10
 
 input:
   warmup_img: '/usr/src/data/holovideo/samples/img0.jpeg'
