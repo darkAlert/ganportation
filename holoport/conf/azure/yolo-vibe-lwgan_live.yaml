@@ -31,7 +31,15 @@ lwgan:
   part_info: '/usr/src/models/lwgan_data/smpl_part_info.json'
   front_info: '/usr/src/models/lwgan_data/front_facial.json'
   head_info: '/usr/src/models/lwgan_data/head.json'
+  face_model: '/usr/src/models/lwgan_data/sphere20a_20171020.pth'
   gpu_ids: '0'
+
+adaptive:
+  uv_mapping: '/usr/src/models/lwgan_data/mapper.txt'
+  pri_path: '/usr/src/data/adaptive/dymmy_img.jpeg'
+  pri_smpl_path: '/usr/src/data/adaptive/smpls.pkl'
+  output_dir: '/usr/src/app/outputs/adaptive_train/1'
+  batch_size: 10
 
 input:
   warmup_img: '/usr/src/data/holovideo/samples/img0.jpeg'
@@ -40,8 +48,9 @@ input:
   view: 'R=0,90,0/t=0,0,0'
   steps: 1
   scene_bbox: '300,20,680,680'
+  target_fps: 20
 
 output:
-  result_dir: '/usr/src/outputs/yolo_vibe_lwgan_live/t1'
+  result_dir: '/usr/src/app/outputs/yolo_vibe_lwgan_live/t1'
 
 

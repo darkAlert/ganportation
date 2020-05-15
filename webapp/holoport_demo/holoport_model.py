@@ -114,7 +114,7 @@ def generate_aux_params(conf):
 
 
 class HoloportModel(object):
-    LABEL = ['holoport_live', 'holoport_andrey', 'holoport_yulia']  # ignore the model
+    LABEL = ['holoport', 'holoport_adaptive', 'holoport_andrey', 'holoport_yulia']  # ignore the model
     SENDS_VIDEO = True
     SENDS_DATA = True
 
@@ -139,6 +139,9 @@ class HoloportModel(object):
         self.yolo, self.yolo_args = init_yolo(conf['yolo'])
         self.vibe, self.vibe_args = init_vibe(conf['vibe'])
         self.lwgan, self.lwgan_args = init_lwgan(conf['lwgan'])
+        self.lwgan.mode = 'predefined'
+        self.adaptive = False
+
         if label is not None:
             if label == 'holoport_andrey':
                 img_path = os.path.join(os.path.dirname(__file__), 'assets/andrey_260_img.tensor')
@@ -149,6 +152,9 @@ class HoloportModel(object):
                 img_path = os.path.join(os.path.dirname(__file__), 'assets/yulia_166_img.tensor')
                 smpl_path = os.path.join(os.path.dirname(__file__), 'assets/yulia_166_smpl.tensor')
                 self.lwgan.load_descriptor(img_path,smpl_path)
+            elif label == 'holoport_adaptive':
+                self.lwgan.ada_conf = conf['adaptive']
+                self.adaptive = True
 
         # Warmup:
         if 'warmup_img' in conf['input']:
@@ -163,12 +169,12 @@ class HoloportModel(object):
         # Make queues, events and threads:
         self.break_event = threading.Event()
         self.frame_q = Queue(maxsize=10000)
-        self.yolo_input_q = Queue(maxsize=1000)
-        self.yolo_output_q = Queue(maxsize=1000)
-        self.vibe_input_q = Queue(maxsize=1000)
-        self.vibe_output_q = Queue(maxsize=1000)
-        self.lwgan_input_q = Queue(maxsize=1000)
-        self.lwgan_output_q = Queue(maxsize=1000)
+        self.yolo_input_q = Queue(maxsize=10000)
+        self.yolo_output_q = Queue(maxsize=10000)
+        self.vibe_input_q = Queue(maxsize=10000)
+        self.vibe_output_q = Queue(maxsize=10000)
+        self.lwgan_input_q = Queue(maxsize=10000)
+        self.lwgan_output_q = Queue(maxsize=10000)
         self.avatar_q = Queue(maxsize=10000)
         self.workers = []
 
@@ -184,7 +190,7 @@ class HoloportModel(object):
         worker_args = (self.yolo, self.vibe, self.break_event, self.yolo_input_q,
                        self.yolo_output_q, self.vibe_input_q, self.vibe_output_q)
         self.workers.append(threading.Thread(target=yolo_vibe_inference_worker, args=worker_args))
-        worker_args = (self.lwgan, self.break_event, self.lwgan_input_q, self.lwgan_output_q, 0.005, True)
+        worker_args = (self.lwgan, self.break_event, self.lwgan_input_q, self.lwgan_output_q, 0.005, True, self.adaptive)
         self.workers.append(threading.Thread(target=lwgan_inference_worker, args=worker_args))
         worker_args = (self.break_event, self.avatar_q, self.connector.send_data, self.connector.send_frame)
         self.workers.append(threading.Thread(target=send_worker, args=worker_args))
@@ -348,7 +354,8 @@ class HoloportBatchModel(object):
 def main(path_to_conf):
     output_dir = None#'/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/holoport/live'
     live = LiveStream(output_dir)
-    live.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_andrey')
+    # live.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_live')
+    live.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_adaptive')
 
 if __name__ == '__main__':
     path_to_conf = 'yolo-vibe-lwgan.yaml'

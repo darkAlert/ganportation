@@ -1,3 +1,4 @@
+import os
 import torch
 import numpy as np
 import cv2
@@ -7,7 +8,7 @@ from lwganrt.models.holoportator_rt import prepare_input as prepare_lwgan_input
 from lwganrt.models.adaptive_personalization_rt import adaptive_personalize
 
 class HoloLwganRT:
-    def __init__(self, args, warmup=True):
+    def __init__(self, args):
         assert torch.cuda.is_available()
         self.device = torch.device('cuda:' + str(args.gpu_ids))
         self.holoport_model = HoloportatorRT(args, device=self.device)
@@ -15,6 +16,7 @@ class HoloLwganRT:
         self.desc_frame = None
         self.desc_smpl = None
         self.mode = 'view'
+        self.ada_conf = None
 
     def load_descriptor(self,img_path, smpl_path):
         self.desc_frame = torch.load(img_path).to(self.device)
@@ -64,19 +66,27 @@ class HoloLwganRT:
 
         return preds
 
-    def run_adaptive_personalization(self, frames, smpls):
-        assert len(frames) == len(smpls)
+    def run_adaptive_personalization(self, img, smpl):
+        assert self.ada_conf is not None
 
         # Train options:
         opt = TestOptions().parse()
         opt.bg_ks = 25
         opt.front_warp = False
         opt.post_tune = True
-        opt.output_dir = './outputs/results/demos/imitators'
-        opt.src_path = 'src_img_path'
+        opt.pri_path =self.ada_conf['pri_path']
+        opt.pri_smpl_path = self.ada_conf['pri_smpl_path']
+        opt.output_dir = self.ada_conf['output_dir']
+        opt.src_path = os.path.join(opt.output_dir, 'src_img.png')
+        opt.batch_size = self.ada_conf['batch_size']
+        opt.uv_mapping = self.ada_conf['uv_mapping']
+
+        # CPU -> GPU:
+        img = img.to(self.device)
+        smpl = smpl.to(self.device)
 
         # Personalize (train):
-        adaptive_personalize(opt, self.holoport_model, frames, smpls)
+        adaptive_personalize(opt, self.holoport_model, img, smpl)
         self.personalized = True
 
         return self.personalized

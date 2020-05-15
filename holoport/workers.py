@@ -223,8 +223,9 @@ def yolo_vibe_inference_worker(yolo, vibe, break_event, yolo_input_q, yolo_outpu
 
     return True
 
-def lwgan_inference_worker(lwgan, break_event, input_q, output_q, timeout=0.005, skip_frames=False):
+def lwgan_inference_worker(lwgan, break_event, input_q, output_q, timeout=0.005, skip_frames=False, adaptive=None):
     print('lwgan_inference_worker has been run...')
+    personalized = False
 
     while not break_event.is_set():
         if skip_frames:
@@ -246,6 +247,26 @@ def lwgan_inference_worker(lwgan, break_event, input_q, output_q, timeout=0.005,
 
         if 'not_found' in data:
             output_q.put(data)
+            continue
+
+        if adaptive and not personalized:
+            import cv2
+            from lwganrt.utils.cv_utils import transform_img
+
+            data_out = data.copy()
+            img = cv2.cvtColor(data_out['frame'], cv2.COLOR_BGR2RGB)
+            bbox = data_out['scene_bbox'][0]
+            img = img[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]]
+            text = 'ADAPTIVE PERSONALIZATION...'
+            cv2.putText(img, text, (5, 128), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+            data_out['lwgan_output'] = transform_img(img, 256) * 2 - 1.0
+            output_q.put(data_out.copy())
+            time.sleep(0.1)
+            output_q.put(data_out)
+
+            lwgan.run_adaptive_personalization(data['lwgan_input_img'],
+                                               data['lwgan_input_smpl'])
+            personalized = True
             continue
 
         # LWGAN inference:

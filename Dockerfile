@@ -43,7 +43,7 @@ RUN mkdir -p /usr/src/models ;\
 
 # download lwgan_data from Azure Blob Storage
 RUN mkdir -p /usr/src/models ;\
-    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/models/lwgan_data.tar.gz?sp=rl&st=2020-05-06T15:19:31Z&se=2020-06-30T15:19:00Z&sv=2019-10-10&sr=b&sig=dVgBC1SQ99A2uEDY%2F7LDTQLsRmZ3wlXMjB9pAjwuA88%3D" "/usr/src/models/lwgan_data.tar.gz" ;\
+    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/models/lwgan_data.tar.gz?sp=rl&st=2020-05-15T11:21:50Z&se=2020-07-31T11:21:00Z&sv=2019-10-10&sr=b&sig=Or%2BXlowNAOJB%2FaZkj4GWBP4FytNQxe4bxJ1MOPJGjos%3D" "/usr/src/models/lwgan_data.tar.gz" ;\
     tar -xvf /usr/src/models/lwgan_data.tar.gz -C /usr/src/models ;\
     rm /usr/src/models/lwgan_data.tar.gz
 
@@ -52,6 +52,12 @@ RUN mkdir -p /usr/src/data ;\
     /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/data/holovideo.tar.gz?sp=rl&st=2020-05-06T15:20:15Z&se=2020-06-30T15:20:00Z&sv=2019-10-10&sr=b&sig=9mLRN%2Ftv%2FSxftJUrGt0W2yhegiV6zQUkAEtgSwLIZog%3D" "/usr/src/data/holovideo.tar.gz" ;\
     tar -xvf /usr/src/data/holovideo.tar.gz -C /usr/src/data ;\
     rm /usr/src/data/holovideo.tar.gz
+
+# download adaptive_data from Azure Blob Storage
+RUN mkdir -p /usr/src/data ;\
+    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/data/adaptive.tar.gz?sp=rl&st=2020-05-15T11:10:25Z&se=2020-07-31T11:10:00Z&sv=2019-10-10&sr=b&sig=Zrj8Z0DKM5%2B5hJ4NE3YEHwNa593HBNaeGB9NVE6XEQg%3D" "/usr/src/data/adaptive.tar.gz" ;\
+    tar -xvf /usr/src/data/adaptive.tar.gz -C /usr/src/data ;\
+    rm /usr/src/data/adaptive.tar.gz
 
 # install pytorch and torchvision with cuda101:
 RUN pip3 install \

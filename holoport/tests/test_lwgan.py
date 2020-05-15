@@ -199,15 +199,9 @@ def test_adaptive_personalization(path_to_conf, save_results=False, train_size=5
     print('Test data has been loaded:', len(test_data))
 
     # Adaptive personalization:
-    frames, smpls = [], []
     print('Running adaptive_personalization...')
-    train_size = min(train_size, len(test_data))
-    for idx, data in enumerate(test_data):
-        if idx >= train_size:
-            break
-        frames.append(data['lwgan_input'])
-        smpls.append(data['smpl'])
-    lwgan.run_adaptive_personalization(frames, smpls)
+    index = 5
+    lwgan.run_adaptive_personalization(test_data[index]['lwgan_input'], test_data[index]['smpl'])
 
     # Inference:
     print('Inferencing...')
@@ -256,5 +250,5 @@ if __name__ == '__main__':
 
 
     # test_batch(path_to_conf, batch_size=2, save_results=True)
-    # test(path_to_conf, save_results=False)
+    # test(path_to_conf, save_results=True)
     test_adaptive_personalization(path_to_conf, save_results=True)
