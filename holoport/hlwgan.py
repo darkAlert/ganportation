@@ -80,6 +80,7 @@ class HoloLwganRT:
         opt.src_path = os.path.join(opt.output_dir, 'src_img.png')
         opt.batch_size = self.ada_conf['batch_size']
         opt.uv_mapping = self.ada_conf['uv_mapping']
+        opt.maskrcnn_path = self.ada_conf['maskrcnn_path']
 
         # CPU -> GPU:
         img = img.to(self.device)

@@ -31,6 +31,8 @@ lwgan:
   part_info: '/usr/src/models/lwgan_data/smpl_part_info.json'
   front_info: '/usr/src/models/lwgan_data/front_facial.json'
   head_info: '/usr/src/models/lwgan_data/head.json'
+  face_model: '/usr/src/models/lwgan_data/sphere20a_20171020.pth'
+  maskrcnn_path: '/usr/src/models/lwgan_data/maskrcnn_resnet50_fpn_coco-bf2d0c1e.pth'
   gpu_ids: '0'
 
 input:
