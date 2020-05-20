@@ -9,6 +9,7 @@ from holoport.hyolo import init_yolo
 from holoport.hvibe import init_vibe
 from holoport.hlwgan import init_lwgan, parse_view_params
 from holoport.live import LiveStream
+from holoport.utils import increase_brightness
 
 
 def send_worker(break_event, avatar_q, send_data, send_frame, timeout=0.005):
@@ -200,7 +201,7 @@ class HoloportModel(object):
         worker_args = (self.break_event, self.avatar_q, self.connector.send_data, self.connector.send_frame)
         self.workers.append(threading.Thread(target=send_worker, args=worker_args))
 
-    def run(self):
+    def run(self, one_shot=True):
         self.connector.logger.info('Running {}...'.format(self.name))
 
         # Run workers:
@@ -223,6 +224,11 @@ class HoloportModel(object):
                 break
 
             if frame is not None:
+                frame = increase_brightness(frame, 10)
+                # if one_shot:
+                #     # frame = cv2.imread('/home/darkalert/Desktop/monstr_gan.jpg')
+                #     time.sleep(0.01)
+                #     one_shot = False
                 data = {'frame': frame.copy(), 'start': time.time()}
                 self.frame_q.put(data, timeout=0.005)
             else:
@@ -357,7 +363,7 @@ class HoloportBatchModel(object):
 '''
 
 def main(path_to_conf):
-    output_dir = None#'/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/holoport/live'
+    output_dir = None#'/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/holoport/live_person'
     live = LiveStream(output_dir)
     # live.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_live')
     live.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_adaptive')
