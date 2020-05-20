@@ -316,3 +316,28 @@ def lwgan_batch_inference_worker(lwgan, break_event, input_q, output_q, timeout=
     print('lwgan_batch_inference_worker has been terminated.')
 
     return True
+
+
+def segm_inference_worker(segmentator, break_event, input_q, output_q, timeout=0.005):
+    print('segm_inference_worker has been run...')
+
+    while not break_event.is_set():
+        try:
+            data = input_q.get(timeout=timeout)
+            input_q.task_done()
+        except Empty:
+            continue
+
+        if 'not_found' in data:
+            output_q.put(data)
+            continue
+
+        # Segmentator inference:
+        _, masked_img = segmentator.inference(data['lwgan_input_img'], apply_mask=True)
+        data['masked_img'] = masked_img
+
+        output_q.put(data)
+
+    print('segm_inference_worker has been terminated.')
+
+    return True
