@@ -363,10 +363,10 @@ class HoloportBatchModel(object):
 '''
 
 def main(path_to_conf):
-    output_dir = None#'/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/holoport/live_person'
+    output_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/holoport/last'
     live = LiveStream(output_dir)
-    # live.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_live')
-    live.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_adaptive')
+    live.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_live')
+    # live.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_adaptive')
 
 if __name__ == '__main__':
     path_to_conf = 'yolo-vibe-lwgan_live.yaml'
