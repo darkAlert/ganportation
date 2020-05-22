@@ -115,7 +115,7 @@ def generate_aux_params(conf):
 
 
 class HoloportModel(object):
-    LABEL = ['holoport', 'holoport_adaptive', 'holoport_andrey', 'holoport_yulia']  # ignore the model
+    LABEL = ['holoport', 'holoport_last', 'holoport_andrey', 'holoport_yulia']  # ignore the model
     SENDS_VIDEO = True
     SENDS_DATA = True
 
@@ -128,6 +128,8 @@ class HoloportModel(object):
         if path_to_conf is None:
             if label is not None and label == 'holoport_adaptive':
                 path_to_conf = 'yolo-vibe-lwgan_adaptive.yaml'
+            elif label is not None and label == 'holoport_last':
+                path_to_conf = 'yolo-vibe-lwgan_last.yaml'
             else:
                 path_to_conf = 'yolo-vibe-lwgan_live.yaml'
         path_to_conf = os.path.join(os.path.dirname(__file__), path_to_conf)
