@@ -43,7 +43,7 @@ RUN mkdir -p /usr/src/models ;\
 
 # download lwgan_data from Azure Blob Storage
 RUN mkdir -p /usr/src/models ;\
-    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/models/lwgan_data.tar.gz?sp=rl&st=2020-05-15T12:20:59Z&se=2020-07-31T12:20:00Z&sv=2019-10-10&sr=b&sig=5Zigwhrd9DYI9KyGc3V5ctVy7a6pSmhIbXv5d%2FAbzW0%3D" "/usr/src/models/lwgan_data.tar.gz" ;\
+    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/models/lwgan_data.tar.gz?sp=rl&st=2020-05-22T15:14:26Z&se=2020-07-31T15:14:00Z&sv=2019-10-10&sr=b&sig=xj70r4xImHzcR8cap47Ex0DAZCmrVQ5Rh22SXJMeb%2BE%3D" "/usr/src/models/lwgan_data.tar.gz" ;\
     tar -xvf /usr/src/models/lwgan_data.tar.gz -C /usr/src/models ;\
     rm /usr/src/models/lwgan_data.tar.gz
 
