@@ -25,5 +25,5 @@ docker build -t ${img_name} .
 
 # test
 printf 'Testing...\n'
-test_cmd='python3 holoport/tests/test_vibe.py holoport/conf/azure/vibe.yaml'
+test_cmd='python3 holoport/tests/test_yolo_vibe_lwgan_multithreads.py holoport/conf/azure/yolo-vibe-lwgan.yaml'
 docker run --gpus all --rm --ipc=host ${img_name} ${test_cmd}

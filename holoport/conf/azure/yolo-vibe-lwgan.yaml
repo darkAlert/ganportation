@@ -3,7 +3,7 @@ yolo:
   weights_path: '/usr/src/models/yolo_data/yolov3-spp-ultralytics.pt'
   names_path: '/usr/src/models/yolo_data/coco.names'
   img_size: 512
-  gpu_id: '1'
+  gpu_id: '0'
   half: False
 
 vibe:
@@ -11,7 +11,7 @@ vibe:
   seqlen: 1
   scale: 1.1
   crop_size: 224
-  gpu_id: '1'
+  gpu_id: '0'
 
 lwgan:
   gen_name: "holoportator"
