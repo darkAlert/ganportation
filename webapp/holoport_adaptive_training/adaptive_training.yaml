@@ -35,13 +35,49 @@ lwgan:
   maskrcnn_path: '/usr/src/models/lwgan_data/maskrcnn_resnet50_fpn_coco-bf2d0c1e.pth'
   gpu_ids: '0'
 
-adaptive:
+segmentator:
   maskrcnn_path: '/usr/src/models/lwgan_data/maskrcnn_resnet50_fpn_coco-bf2d0c1e.pth'
+  ks: 1
+  gpu_id: '0'
+
+lwgan_ada:
+  dataset_size: 200
+  intervals: 1
+  data_dir: '/usr/src/app/outputs/ada/datasets/last'
+  checkpoints_dir: '/usr/src/app/outputs/ada/output'
+  load_path: '/usr/src/models/lwgan_data/net_epoch_20_id_G.pth'
+  load_D_path: '/usr/src/models/lwgan_data/net_epoch_20_id_D.pth'
+  smpl_model: '/usr/src/models/lwgan_data/smpl_model.pkl'
+  hmr_model: '/usr/src/models/lwgan_data/hmr_tf2pt.pth'
+  smpl_faces: '/usr/src/models/lwgan_data/smpl_faces.npy'
   uv_mapping: '/usr/src/models/lwgan_data/mapper.txt'
-  pri_path: '/usr/src/data/adaptive/dymmy_img.jpeg'
-  pri_smpl_path: '/usr/src/data/adaptive/smpls.pkl'
-  output_dir: '/usr/src/app/outputs/adaptive_train/1'
-  batch_size: 8
+  part_info: '/usr/src/models/lwgan_data/smpl_part_info.json'
+  front_info: '/usr/src/models/lwgan_data/front_facial.json'
+  head_info: '/usr/src/models/lwgan_data/head.json'
+  face_model: '/usr/src/models/lwgan_data/sphere20a_20171020.pth'
+  maskrcnn_path: '/usr/src/models/lwgan_data/maskrcnn_resnet50_fpn_coco-bf2d0c1e.pth'
+  dataset_mode: 'Ada'
+  images_folder: 'imgs'
+  smpls_folder: 'smpls'
+  model: 'holoportator_trainer'
+  gen_name: 'holoportator'
+  image_size: 256
+  lambda_rec: 10.0
+  lambda_tsf: 10.0
+  lambda_face: 5.0
+  lambda_style: 0.0
+  lambda_mask: 1.0
+  lambda_mask_smooth: 1.0
+  name: 'ada_last'
+  mask_bce: True
+  use_vgg: True
+  use_face: True
+  train_D: True
+  lr_G: 0.0002
+  nepochs_no_decay: 3
+  nepochs_decay: 5
+  batch_size: 14
+  gpu_ids: '0'
 
 input:
   warmup_img: '/usr/src/data/holovideo/samples/img0.jpeg'
