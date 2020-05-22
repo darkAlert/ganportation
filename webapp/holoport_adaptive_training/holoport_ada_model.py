@@ -248,9 +248,12 @@ class HoloportAdaModel(object):
             self.connector.logger.info('Starting adaprive training process...')
             self.break_event.clear()
             self.run_ada()
+            self.connector.logger.info('Now you can run "holoport_last" model!')
         else:
             self.stop()
 
+        _ = self.connector.recv_all_frames()
+        send_log_frame('exiting', self.output_q)
         for _ in self.connector.frames():
             send_log_frame('exiting', self.output_q)
         self.connector.logger.info('Now you can run "holoport_last" model!')
