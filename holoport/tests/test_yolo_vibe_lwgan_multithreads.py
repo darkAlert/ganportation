@@ -17,15 +17,12 @@ def test_multithreads(path_to_conf, save_results=True, realtime_ms=None):
     print('Config has been loaded from', path_to_conf)
 
     # Init YOLO-RT model:
-    conf['yolo']['gpu_id'] = '1'
     yolo, yolo_args = init_yolo(conf['yolo'])
 
     # Init VIBE-RT model:
-    conf['vibe']['gpu_id'] = '1'
     vibe, vibe_args = init_vibe(conf['vibe'])
 
     # Init LWGAN-RT model:
-    conf['lwgan']['gpu_ids'] = '0'
     lwgan, lwgan_args = init_lwgan(conf['lwgan'])
 
     # Warmup:
