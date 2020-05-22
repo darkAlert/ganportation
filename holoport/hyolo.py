@@ -18,7 +18,6 @@ class HoloYoloRT():
 
         # Init YOLO-RT:
         self.yolo_model = Darknet(args.yolo_cfg, self.img_size)
-        print ('self.device=',self.device)
         self.yolo_model.load_state_dict(torch.load(args.yolo_weights, map_location=self.device)['model'])
         self.yolo_model.to(self.device).eval()
 
