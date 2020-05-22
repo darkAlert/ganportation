@@ -6,7 +6,7 @@ from lwganrt.utils.tb_visualizer import TBVisualizer
 
 
 class LWGANTrainer(object):
-    def __init__(self, args):
+    def __init__(self, args, callback=None):
         self._opt = args
 
         data_loader_train = CustomDatasetDataLoader(self._opt, is_for_train=True)
@@ -18,9 +18,9 @@ class LWGANTrainer(object):
 
         self._tb_visualizer = TBVisualizer(self._opt)
 
-        self._train()
+        self._train(callback)
 
-    def _train(self):
+    def _train(self, callback):
         self._total_steps = self._opt.load_epoch * self._dataset_train_size
         self._iters_per_epoch = self._dataset_train_size / self._opt.batch_size
         self._last_display_time = None
@@ -30,6 +30,10 @@ class LWGANTrainer(object):
 
         for i_epoch in range(self._opt.load_epoch + 1, self._opt.nepochs_no_decay + self._opt.nepochs_decay + 1):
             epoch_start_time = time.time()
+
+            if callback is not None:
+                info = {'epoch': i_epoch, 'total': self._opt.nepochs_no_decay + self._opt.nepochs_decay + 1}
+                callback.set(info)
 
             # train epoch
             self._train_epoch(i_epoch)

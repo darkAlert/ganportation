@@ -18,8 +18,27 @@ from lwganrt.utils.util import write_pickle_file, clear_dir
 from lwganrt.options.train_options import TrainOptions
 
 
-def send_worker(break_event, dataset_is_ready, dataset, dataset_size, input_q, send_data, send_frame, timeout=0.005):
+def send_worker(break_event, input_q, send_data, send_frame, timeout=0.005):
     print('send_worker has been run...')
+
+    while not break_event.is_set():
+        try:
+            input = input_q.get(timeout=timeout)
+            input_q.task_done()
+        except Empty:
+            continue
+
+        # Send data:
+        send_data(input['data'])
+        send_frame(input['frame'])
+
+    print('send_worker has been terminated.')
+
+    return True
+
+
+def draw_worker(break_event, dataset_is_ready, dataset, dataset_size, input_q, output_q, timeout=0.005):
+    print('draw_worker has been run...')
 
     mean_latency = None
     mean_fps = None
@@ -85,11 +104,11 @@ def send_worker(break_event, dataset_is_ready, dataset, dataset_size, input_q, s
         text = 'wait:{:.1f}'.format(mean_wait * 1000)
         cv2.putText(data['frame'], text, (5, 105), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 0, 0), 2)
 
-        # Send data:
-        send_data(dict(fps=fps))
-        send_frame(data['frame'])
+        # Output
+        output = {'frame': data['frame'], 'data': dict(fps=fps)}
+        output_q.put(output)
 
-    print('send_worker has been terminated.')
+    print('draw_worker has been terminated.')
 
     return True
 
@@ -115,6 +134,7 @@ def generate_aux_params(conf):
     aux_params['view'] = view
 
     return aux_params
+
 
 class HoloportAdaModel(object):
     LABEL = ['holoport_adaptive_training']
@@ -143,8 +163,6 @@ class HoloportAdaModel(object):
         # Init model:
         self.yolo, self.yolo_args = init_yolo(self.conf['yolo'])
         self.vibe, self.vibe_args = init_vibe(self.conf['vibe'])
-        # self.lwgan, self.lwgan_args = init_lwgan(conf['lwgan'])
-        # self.lwgan.mode = 'predefined'
         self.pre_lwgan_args = lambda:0
         self.pre_lwgan_args.image_size = self.conf['lwgan_ada']['image_size']
         self.dataset = []
@@ -160,12 +178,14 @@ class HoloportAdaModel(object):
 
         # Make queues, events and threads:
         self.break_event = threading.Event()
+        self.break_send_event = threading.Event()
         self.dataset_is_ready = threading.Event()
         self.frame_q = Queue(maxsize=1000)
         self.yolo_input_q = Queue(maxsize=1000)
         self.yolo_output_q = Queue(maxsize=1000)
         self.vibe_input_q = Queue(maxsize=1000)
         self.vibe_output_q = Queue(maxsize=1000)
+        self.draw_q = Queue(maxsize=1000)
         self.output_q = Queue(maxsize=1000)
         self.dataset_q = Queue(maxsize=1000)
         self.workers = []
@@ -175,30 +195,26 @@ class HoloportAdaModel(object):
         self.workers.append(threading.Thread(target=pre_yolo_worker, args=worker_args))
         worker_args = (self.vibe_args, self.break_event, self.yolo_output_q, self.vibe_input_q, 0.005, True)
         self.workers.append(threading.Thread(target=pre_vibe_worker, args=worker_args))
-        worker_args = (self.pre_lwgan_args, self.break_event, self.vibe_output_q, self.output_q)
+        worker_args = (self.pre_lwgan_args, self.break_event, self.vibe_output_q, self.draw_q)
         self.workers.append(threading.Thread(target=pre_lwgan_worker, args=worker_args))
         worker_args = (self.yolo, self.vibe, self.break_event, self.yolo_input_q,
                        self.yolo_output_q, self.vibe_input_q, self.vibe_output_q)
         self.workers.append(threading.Thread(target=yolo_vibe_inference_worker, args=worker_args))
-        worker_args = (self.break_event, self.dataset_is_ready, self.dataset, self.conf['lwgan_ada']['dataset_size'],
-                       self.output_q, self.connector.send_data, self.connector.send_frame)
-        self.workers.append(threading.Thread(target=send_worker, args=worker_args))
-
-        # worker_args = (self.segm, self.break_event, self.segm_input_q, self.segm_output_q)
-        # self.workers.append(threading.Thread(target=segm_inference_worker, args=worker_args))
-        # worker_args = (conf['lwgan_ada'], self.break_event, self.dataset_is_ready, self.segm_output_q, self.output_q)
-        # self.workers.append(threading.Thread(target=dataset_worker, args=worker_args))
-        # worker_args = (self.lwgan, self.break_event, self.lwgan_input_q, self.lwgan_output_q, 0.005, True)
-        # self.workers.append(threading.Thread(target=lwgan_inference_worker, args=worker_args))
+        worker_args = (self.break_event, self.dataset_is_ready, self.dataset,
+                       self.conf['lwgan_ada']['dataset_size'], self.draw_q, self.output_q)
+        self.workers.append(threading.Thread(target=draw_worker, args=worker_args))
+        worker_args = (self.break_send_event, self.output_q, self.connector.send_data, self.connector.send_frame)
+        self.s_worker = threading.Thread(target=send_worker, args=worker_args)
 
 
     def run(self):
         self.connector.logger.info('Running {}...'.format(self.name))
-        self.dataset_is_ready.set()
+        # self.dataset_is_ready.set()
 
         # Run workers:
         for w in self.workers:
             w.start()
+        self.s_worker.start()
 
         # Cleanup frames queue:
         _ = self.connector.recv_all_frames()
@@ -212,11 +228,7 @@ class HoloportAdaModel(object):
             _ = self.connector.recv_all_frames()
             start = time.time()
 
-            if self.break_event.is_set():
-                break
-
-            if self.dataset_is_ready.is_set():
-                self.stop()
+            if self.break_event.is_set() or self.dataset_is_ready.is_set():
                 break
 
             if frame is not None:
@@ -224,17 +236,30 @@ class HoloportAdaModel(object):
                 data = {'frame': frame.copy(), 'start': time.time()}
                 self.frame_q.put(data, timeout=0.005)
             else:
-                self.stop()
+                break
+
+        # Terminate Holoport workers:
+        self.break_event.set()
+        for w in self.workers:
+            w.join()
 
         # Run adaptive training:
         if self.dataset_is_ready.is_set():
             self.connector.logger.info('Starting adaprive training process...')
+            self.break_event.clear()
             self.run_ada()
+        else:
+            self.stop()
+
+        for _ in self.connector.frames():
+            send_log_frame('exiting', self.output_q)
+        self.connector.logger.info('Now you can run "holoport_last" model!')
 
 
     def stop(self):
         self.connector.logger.info('Stopping {}...'.format(self.name))
         self.break_event.set()
+        self.break_send_event.set()
 
         for w in self.workers:
             w.join()
@@ -246,54 +271,133 @@ class HoloportAdaModel(object):
 
     def run_ada(self):
         '''
-            Run adaptive training preocess
+            Adaptive training worker
         '''
+
         # 1. Process the dataset and save it:
         self.connector.logger.info('ADA: Preprocessing data...')
-        # self.segment_dataset(self.dataset)
+        worker_args = (self.dataset, self.conf, self.connector.logger, self.break_event)
+        worker = threading.Thread(target=segment_dataset_worker, args=worker_args)
+        worker.start()
+        while worker.isAlive():
+            send_log_frame('processing', self.output_q)
+            worker.join(timeout=0.005)
+
+        if self.break_event.is_set():
+            self.connector.logger.info('ADA: Training has been interrupted!')
+            return False
 
         # 2. Run adaptive training:
         self.connector.logger.info('ADA: Training...')
-        clear_dir(self.conf['lwgan_ada']['checkpoints_dir'])
-        args = TrainOptions().parse(params=self.conf['lwgan_ada'], set_cuda_env=False, verbose=False)
-        trainer = LWGANTrainer(args)
+        callback = CallbackTrainer()
+        worker_args = (self.conf, self.connector.logger, callback, self.break_event)
+        worker = threading.Thread(target=train_worker, args=worker_args)
+        worker.start()
+        progress = 0
+        while worker.isAlive():
+            info = callback.get()
+            if info is not None:
+                progress = float(info['epoch']) / info['total'] * 100
+            send_log_frame('training', self.output_q, {'progress': progress})
+            worker.join(timeout=0.005)
+        send_log_frame('training', self.output_q, {'progress': 100})
+
+        if self.break_event.is_set():
+            self.connector.logger.info('ADA: Training has been interrupted!')
+            return False
+
+        # 3. Run HoloportModel with the trained model:
+
+        self.connector.logger.info('ADA: Adaptive training has been completed!')
+        return True
 
 
-    def segment_dataset(self, dataset):
-        # Init segmentator:
-        self.connector.logger.info('Initializing SegmentatorRT from {}'.format(
-            self.conf['segmentator']['maskrcnn_path']))
-        segmentator = SegmentatorRT(self.conf['segmentator'])
+class CallbackTrainer():
+    def __init__(self):
+        self.log_q = Queue(maxsize=1000)
 
-        # Make dataset dirs:
-        imgs_dir = os.path.join(self.conf['lwgan_ada']['data_dir'], 'imgs')
-        smpls_dir = os.path.join(self.conf['lwgan_ada']['data_dir'], 'smpls')
-        clear_dir(imgs_dir)
-        clear_dir(smpls_dir)
-        if not os.path.exists(imgs_dir):
-            os.makedirs(imgs_dir)
-        if not os.path.exists(smpls_dir):
-            os.makedirs(smpls_dir)
+    def set(self, info):
+        self.log_q.put(info)
 
-        # Process and save:
-        for t in tqdm(range(len(dataset))):
-            _, masked_img = segmentator.inference(dataset[t]['lwgan_input_img'], apply_mask=True)
+    def get(self):
+        try:
+            info = self.log_q.get(block=False)
+            self.log_q.task_done()
+            return info
+        except Empty:
+            return None
 
-            img_path = os.path.join(imgs_dir, str(t).zfill(5) + '.jpeg')
-            cv_utils.save_cv2_img(masked_img, img_path, normalize=True)
-            smpl_path = os.path.join(smpls_dir, str(t).zfill(5) + '.pkl')
-            write_pickle_file(smpl_path, dataset[t]['smpl_vec'])
 
-        self.connector.logger.info('Dataset has been created! Total size: {}'.format(len(dataset)))
+def send_log_frame(type, output_q, info=None):
+    if type == 'processing':
+        frame = np.zeros((720, 1280, 3), dtype=np.uint8)
+        text = 'Processing the collected dataset...'
+        cv2.putText(frame, text, (100, 360), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 255, 0), 2)
+        output = {'frame': frame, 'data': None}
+        output_q.put(output)
+    elif type == 'training':
+        assert info is not None
+        frame = np.zeros((720, 1280, 3), dtype=np.uint8)
+        text = 'Training {}%'.format(int(info['progress']))
+        cv2.putText(frame, text, (285, 360), cv2.FONT_HERSHEY_SIMPLEX, 3.0, (0, 255, 0), 2)
+        output = {'frame': frame, 'data': None}
+        output_q.put(output)
+    elif type == 'exiting':
+        frame = np.zeros((720, 1280, 3), dtype=np.uint8)
+        text = 'Now you can run "holoport_last" model!'
+        cv2.putText(frame, text, (5, 360), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 255, 0), 2)
+        output = {'frame': frame, 'data': None}
+        output_q.put(output)
+    else:
+        raise NotImplementedError
+
+
+def segment_dataset_worker(dataset, conf, logger, stop_event):
+    # Init segmentator:
+    logger.info('Initializing SegmentatorRT from {}'.format(conf['segmentator']['maskrcnn_path']))
+    segmentator = SegmentatorRT(conf['segmentator'])
+
+    # Make dataset dirs:
+    imgs_dir = os.path.join(conf['lwgan_ada']['data_dir'], 'imgs')
+    smpls_dir = os.path.join(conf['lwgan_ada']['data_dir'], 'smpls')
+    clear_dir(imgs_dir)
+    clear_dir(smpls_dir)
+    if not os.path.exists(imgs_dir):
+        os.makedirs(imgs_dir)
+    if not os.path.exists(smpls_dir):
+        os.makedirs(smpls_dir)
+
+    # Process and save:
+    for t in tqdm(range(len(dataset))):
+        if stop_event.is_set():
+            break
+
+        _, masked_img = segmentator.inference(dataset[t]['lwgan_input_img'], apply_mask=True)
+
+        img_path = os.path.join(imgs_dir, str(t).zfill(5) + '.jpeg')
+        cv_utils.save_cv2_img(masked_img, img_path, normalize=True)
+        smpl_path = os.path.join(smpls_dir, str(t).zfill(5) + '.pkl')
+        write_pickle_file(smpl_path, dataset[t]['smpl_vec'])
+
+    logger.info('Dataset has been created! Total size: {}'.format(len(dataset)))
+
+
+def train_worker(conf, logger, callback, stop_event):
+    clear_dir(conf['lwgan_ada']['checkpoints_dir'])
+
+    args = TrainOptions().parse(params=conf['lwgan_ada'], set_cuda_env=False, verbose=False)
+    LWGANTrainer(args, callback)
+
+    logger.info('Model training has been completed!')
 
 
 def run_live_stream():
-    output_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/holoport/adaptive_training'
+    output_dir = None#'/home/darkalert/Desktop/adaptive_train/tests/ada/live_last'
     stream = LiveStream(output_dir)
     stream.run_model(HoloportAdaModel, path_to_conf=path_to_conf, label='holoport_adaptive_training')
 
 def run_video_stream(output_dir):
-    output_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/holoport/adaptive_training'
+    output_dir = None#'/home/darkalert/Desktop/adaptive_train/tests/ada/video_last'
     stream = VideoStream(output_dir, out_fps=20, skip_each_i_frame=3)
     stream.run_model(HoloportAdaModel, path_to_conf=path_to_conf, label='holoport_adaptive_training')
 

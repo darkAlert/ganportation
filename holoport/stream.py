@@ -65,9 +65,13 @@ class LiveStream():
             self.logger.info('Total output frames={}'.format(self.counter))
 
     def send_frame(self, frame):
-        cv2.imshow('LiveStream', frame)
+        if self.stop_event.is_set():
+            return
+
         if cv2.waitKey(1) & 0xFF == ord('q'):
             self.stop_event.set()
+
+        cv2.imshow('LiveStream', frame)
 
         if self.output_dir:
             name = str(self.counter).zfill(5) + '.jpeg'
