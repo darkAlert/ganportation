@@ -9,54 +9,13 @@ from holoport.conf.conf_parser import parse_conf
 from holoport.hyolo import init_yolo
 from holoport.hvibe import init_vibe
 from holoport.hlwgan import init_lwgan, parse_view_params
-from holoport.live import LiveStream
+from holoport.stream import LiveStream, VideoStream, VideoSaver
 from holoport.utils import increase_brightness
 from holoport.trainer import LWGANTrainer
 from lwganrt.models.segmentator_rt import SegmentatorRT
 import lwganrt.utils.cv_utils as cv_utils
 from lwganrt.utils.util import write_pickle_file, clear_dir
 from lwganrt.options.train_options import TrainOptions
-
-
-# def dataset_worker(opt, break_event, dataset_is_ready, input_q, output_q, timeout=0.005):
-#     print('dataset_worker has been run...')
-#     imgs_dir = os.path.join(opt['data_dir'], 'imgs')
-#     smpls_dir = os.path.join(opt['data_dir'], 'smpls')
-#     clear_dir(imgs_dir)
-#     clear_dir(smpls_dir)
-#     if not os.path.exists(imgs_dir):
-#         os.makedirs(imgs_dir)
-#     if not os.path.exists(smpls_dir):
-#         os.makedirs(smpls_dir)
-#     index = 0
-#
-#     while not break_event.is_set():
-#         try:
-#             data = input_q.get(timeout=timeout)
-#             input_q.task_done()
-#         except Empty:
-#             continue
-#
-#         if 'not_found' in data:
-#             output_q.put(data)
-#             continue
-#
-#         # Save:
-#         img_path = os.path.join(imgs_dir, str(index).zfill(5) + '.jpeg')
-#         cv_utils.save_cv2_img(data['masked_img'], img_path, normalize=True)
-#         smpl_path = os.path.join(smpls_dir, str(index).zfill(5) + '.pkl')
-#         write_pickle_file(smpl_path, data['smpl_vec'])
-#
-#         output_q.put(data)
-#
-#         index += 1
-#         if index >= opt['dataset_size']:
-#             dataset_is_ready.set()
-#             break
-#
-#     print('dataset_worker has been terminated.')
-#
-#     return True
 
 
 def send_worker(break_event, dataset_is_ready, dataset, dataset_size, input_q, send_data, send_frame, timeout=0.005):
@@ -235,7 +194,7 @@ class HoloportAdaModel(object):
 
     def run(self):
         self.connector.logger.info('Running {}...'.format(self.name))
-        # self.dataset_is_ready.set()
+        self.dataset_is_ready.set()
 
         # Run workers:
         for w in self.workers:
@@ -291,7 +250,7 @@ class HoloportAdaModel(object):
         '''
         # 1. Process the dataset and save it:
         self.connector.logger.info('ADA: Preprocessing data...')
-        self.segment_dataset(self.dataset)
+        # self.segment_dataset(self.dataset)
 
         # 2. Run adaptive training:
         self.connector.logger.info('ADA: Training...')
@@ -328,10 +287,19 @@ class HoloportAdaModel(object):
         self.connector.logger.info('Dataset has been created! Total size: {}'.format(len(dataset)))
 
 
+def run_live_stream():
+    output_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/holoport/adaptive_training'
+    stream = LiveStream(output_dir)
+    stream.run_model(HoloportAdaModel, path_to_conf=path_to_conf, label='holoport_adaptive_training')
+
+def run_video_stream(output_dir):
+    output_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/holoport/adaptive_training'
+    stream = VideoStream(output_dir, out_fps=20, skip_each_i_frame=3)
+    stream.run_model(HoloportAdaModel, path_to_conf=path_to_conf, label='holoport_adaptive_training')
+
 def main(path_to_conf):
-    output_dir = None#'/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/holoport/adaptive_training'
-    live = LiveStream(output_dir)
-    live.run_model(HoloportAdaModel, path_to_conf=path_to_conf, label='holoport_adaptive_training')
+    run_live_stream()
+    # run_video_stream()
 
 if __name__ == '__main__':
     path_to_conf = 'adaptive_training.yaml'

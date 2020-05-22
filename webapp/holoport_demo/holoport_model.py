@@ -8,7 +8,7 @@ from holoport.conf.conf_parser import parse_conf
 from holoport.hyolo import init_yolo
 from holoport.hvibe import init_vibe
 from holoport.hlwgan import init_lwgan, parse_view_params
-from holoport.live import LiveStream
+from holoport.stream import LiveStream, VideoStream, VideoSaver
 from holoport.utils import increase_brightness
 
 
@@ -145,7 +145,7 @@ class HoloportModel(object):
         self.yolo, self.yolo_args = init_yolo(conf['yolo'])
         self.vibe, self.vibe_args = init_vibe(conf['vibe'])
         self.lwgan, self.lwgan_args = init_lwgan(conf['lwgan'])
-        self.lwgan.mode = 'predefined'
+        self.lwgan.mode = 'view'#'predefined'
         self.adaptive = False
 
         if label is not None:
@@ -362,11 +362,26 @@ class HoloportBatchModel(object):
         return True
 '''
 
+
+def run_live_stream():
+    output_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/holoport/live/last'
+    stream = LiveStream(output_dir)
+    stream.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_live')
+    # stream.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_adaptive')
+
+def run_video_stream():
+    source_dir = '/home/darkalert/Desktop/adaptive_train/videos/anton'
+    output_dir = '/home/darkalert/Desktop/adaptive_train/tests/holoport/video/last'
+    stream = VideoStream(source_dir, out_fps=20, skip_each_i_frame=3, output_dir=output_dir)
+    stream.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_live')
+
+def run_video_saver():
+    VideoSaver('/home/darkalert/Desktop/adaptive_train/videos/last', area_box=(290,10,700,700))
+
 def main(path_to_conf):
-    output_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/holoport/last'
-    live = LiveStream(output_dir)
-    live.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_live')
-    # live.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_adaptive')
+    # run_live_stream(output_dir)
+    run_video_stream()
+    # run_video_saver()
 
 if __name__ == '__main__':
     path_to_conf = 'yolo-vibe-lwgan_live.yaml'

@@ -88,9 +88,9 @@ def pre_yolo_worker(args, break_event, input_q, output_q, aux_params, timeout=0.
             continue
 
         # Update avatar view:
-        view['R'][0] = 0
-        view['R'][1] = delta * step_i / 180.0 * np.pi
-        view['R'][2] = 0
+        # view['R'][0] = 0
+        # view['R'][1] = delta * step_i / 180.0 * np.pi
+        # view['R'][2] = 0
         data['lwgan_input_view'] = view
 
         # Set scene bbox and cbbox:

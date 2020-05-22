@@ -6,7 +6,7 @@ from queue import Queue, Empty, Full
 from holoport.workers import *
 from holoport.conf.conf_parser import parse_conf
 from holoport.hyolo import init_yolo
-from holoport.live import LiveStream
+from holoport.stream import LiveStream, VideoStream
 
 
 def draw_worker(break_event, input_q, output_q, timeout=0.005):

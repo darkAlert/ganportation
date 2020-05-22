@@ -8,7 +8,7 @@ from holoport.conf.conf_parser import parse_conf
 from holoport.hyolo import init_yolo
 from holoport.hvibe import init_vibe
 from holoport.smpl_renderer import NeuralSmplRenderer
-from holoport.live import LiveStream
+from holoport.stream import LiveStream, VideoStream
 
 
 def box_fits_into_scene(bbox, scene_bbox):
