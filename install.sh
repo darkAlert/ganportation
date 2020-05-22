@@ -1,7 +1,7 @@
 #! /bin/bash
 
 root_dir=~/builds
-img_name=holoport-cuda101:1.0.3
+img_name=holoport-cuda101:1.0.4
 username=holoanton
 
 mkdir -p ${root_dir}
