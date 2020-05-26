@@ -255,17 +255,18 @@ def run_live_stream():
     # stream.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_adaptive')
 
 def run_video_stream():
-    source_dir = '/home/darkalert/Desktop/adaptive_train/videos/anton'
+    source_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/avatars/person_1/light-100_temp-5600/garment_1/freestyle/cam1'
     output_dir = '/home/darkalert/Desktop/adaptive_train/tests/holoport/video_last'
-    stream = VideoStream(source_dir, out_fps=20, skip_each_i_frame=3, output_dir=output_dir)
+    # stream = VideoStream(source_dir, out_fps=20, skip_each_i_frame=3, output_dir=output_dir)
+    stream = VideoStream(source_dir, out_fps=30, skip_each_i_frame=None, output_dir=output_dir)
     stream.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_live')
 
 def run_video_saver():
     VideoSaver('/home/darkalert/Desktop/adaptive_train/videos/last', area_box=(290,10,700,700))
 
 def main(path_to_conf):
-    run_live_stream()
-    # run_video_stream()
+    # run_live_stream()
+    run_video_stream()
     # run_video_saver()
 
 if __name__ == '__main__':
