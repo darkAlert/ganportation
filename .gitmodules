@@ -1,16 +1,16 @@
 [submodule "thirdparty/vibe"]
 	path = thirdparty/vibe
-	url = https://bitbucket.org/vadimkalikin/vibe.git
+	url = https://github.com/darkAlert/vibe-rt.git
 	branch = RT
 [submodule "thirdparty/impersonator"]
 	path = thirdparty/impersonator
-	url = https://bitbucket.org/kazendi/impersonator.git
+	url = https://github.com/darkAlert/impersonator-rt.git
 	branch = RT
 [submodule "thirdparty/yolo"]
 	path = thirdparty/yolo
-	url = https://bitbucket.org/kazendi/yolov3.git
+	url = https://github.com/darkAlert/yolov3-rt.git
 	branch = RT
 [submodule "thirdparty/retinafacert"]
-	path = thirdparty/retinafacert
-	url = https://bitbucket.org/kazendi/retinafacert.git
+        path = thirdparty/retinafacert
+        url = https://github.com/darkAlert/retinafacert.git
 	branch = RT
