@@ -1,12 +1,12 @@
 [submodule "thirdparty/vibe"]
 	path = thirdparty/vibe
-	url = https://holoanton@bitbucket.org/vadimkalikin/vibe.git
+	url = https://github.com/darkAlert/vibe-rt.git
 	branch = RT
 [submodule "thirdparty/impersonator"]
 	path = thirdparty/impersonator
-	url = https://holoanton@bitbucket.org/kazendi/impersonator.git
+	url = https://github.com/darkAlert/impersonator-rt.git
 	branch = RT
 [submodule "thirdparty/yolo"]
 	path = thirdparty/yolo
-	url = https://holoanton@bitbucket.org/kazendi/yolov3.git
+	url = https://github.com/darkAlert/yolov3-rt.git
 	branch = RT
