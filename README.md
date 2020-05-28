@@ -1,6 +1,7 @@
 
 <p float="center">
-  <img src="https://s7.gifyu.com/images/rotation19461b210adb08b6.gif" />
+  <img src="https://s7.gifyu.com/images/rotation19461b210adb08b6.gif" width="49% />
+  <img src="https://s5.gifyu.com/images/ezgif-6-fb456de304c9.gif" width="49%" />                                                                   
 </p>
 
 # USING DOCKER #
