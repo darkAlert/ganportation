@@ -24,6 +24,8 @@ lwgan:
   save_res: False
   n_threads_test: 4
   load_path: '/usr/src/app/outputs/ada/output/ada_last/net_epoch_last_id_G.pth'
+  desc_img: '/usr/src/app/outputs/ada/output/desc_last/00015.img'
+  desc_smpl: '/usr/src/app/outputs/ada/output/desc_last/00015.smpl'
   smpl_model: '/usr/src/models/lwgan_data/smpl_model.pkl'
   hmr_model: '/usr/src/models/lwgan_data/hmr_tf2pt.pth'
   smpl_faces: '/usr/src/models/lwgan_data/smpl_faces.npy'

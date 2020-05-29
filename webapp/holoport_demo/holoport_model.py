@@ -67,7 +67,7 @@ def send_worker(break_event, avatar_q, send_data, send_frame, timeout=0.005):
             x1, x2 = scene_bbox[0], scene_bbox[0] + scene_bbox[2]
             y1, y2 = scene_bbox[1], scene_bbox[1] + scene_bbox[3]
             data['avatar'] = cv2.resize(data['avatar'], (scene_bbox[2],scene_bbox[3]))
-            avatar_crop = cv2.addWeighted(data['frame'][y1:y2, x1:x2, :], 0.1, data['avatar'], 0.9, 0)
+            avatar_crop = cv2.addWeighted(data['frame'][y1:y2, x1:x2, :], 0.01, data['avatar'], 0.99, 0)
             data['avatar'] = data['frame']
             data['avatar'][y1:y2, x1:x2, :] = avatar_crop
 
@@ -115,7 +115,7 @@ def generate_aux_params(conf):
 
 
 class HoloportModel(object):
-    LABEL = ['holoport', 'holoport_last', 'holoport_andrey', 'holoport_yulia']  # ignore the model
+    LABEL = ['holoport', 'holoport_last', 'holoport_rotation_last', 'holoport_andrey', 'holoport_yulia']  # ignore the model
     SENDS_VIDEO = True
     SENDS_DATA = True
 
@@ -128,7 +128,8 @@ class HoloportModel(object):
         if path_to_conf is None:
             if label is not None and label == 'holoport_adaptive':
                 path_to_conf = 'yolo-vibe-lwgan_adaptive.yaml'
-            elif label is not None and label == 'holoport_last':
+            elif label is not None and \
+                    any(label == l for l in ['holoport_last', 'holoport_rotation_last']):
                 path_to_conf = 'yolo-vibe-lwgan_last.yaml'
             else:
                 path_to_conf = 'yolo-vibe-lwgan_live.yaml'
@@ -163,6 +164,11 @@ class HoloportModel(object):
             elif label == 'holoport_adaptive':
                 self.lwgan.ada_conf = conf['adaptive']
                 self.adaptive = True
+            elif label == 'holoport_rotation_last':
+                conf['input']['steps'] = 90
+                self.lwgan.load_descriptor(conf['lwgan']['desc_img'], conf['lwgan']['desc_smpl'])
+            elif label == 'holoport_last':
+                self.lwgan.load_descriptor(conf['lwgan']['desc_img'], conf['lwgan']['desc_smpl'])
 
         # Warmup:
         if 'warmup_img' in conf['input']:
@@ -191,7 +197,7 @@ class HoloportModel(object):
         self.workers.append(threading.Thread(target=pre_yolo_worker, args=worker_args))
         worker_args = (self.vibe_args, self.break_event, self.yolo_output_q, self.vibe_input_q, 0.005, True)
         self.workers.append(threading.Thread(target=pre_vibe_worker, args=worker_args))
-        worker_args = (self.lwgan_args, self.break_event, self.vibe_output_q, self.lwgan_input_q)
+        worker_args = (self.lwgan_args, self.break_event, self.vibe_output_q, self.lwgan_input_q, self.aux_params)
         self.workers.append(threading.Thread(target=pre_lwgan_worker, args=worker_args))
         worker_args = (self.break_event, self.lwgan_output_q, self.avatar_q)
         self.workers.append(threading.Thread(target=postprocess_worker, args=worker_args))
@@ -203,7 +209,7 @@ class HoloportModel(object):
         worker_args = (self.break_event, self.avatar_q, self.connector.send_data, self.connector.send_frame)
         self.workers.append(threading.Thread(target=send_worker, args=worker_args))
 
-    def run(self, one_shot=True):
+    def run(self):
         self.connector.logger.info('Running {}...'.format(self.name))
 
         # Run workers:
@@ -227,11 +233,8 @@ class HoloportModel(object):
 
             if frame is not None:
                 frame = increase_brightness(frame, 10)
-                # if one_shot:
-                #     # frame = cv2.imread('/home/darkalert/Desktop/monstr_gan.jpg')
-                #     time.sleep(0.01)
-                #     one_shot = False
                 data = {'frame': frame.copy(), 'start': time.time()}
+                data['new_R'] = self.connector.client_data.horizontal_rotation()
                 self.frame_q.put(data, timeout=0.005)
             else:
                 self.stop()
@@ -249,24 +252,24 @@ class HoloportModel(object):
 
 
 def run_live_stream():
-    output_dir = None#'/home/darkalert/Desktop/adaptive_train/tests/holoport/live_last'
+    output_dir = '/home/darkalert/Desktop/adaptive_train/tests/holoport/live_last'
     stream = LiveStream(output_dir)
-    stream.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_live')
-    # stream.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_adaptive')
+    # stream.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_live')
+    stream.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_last')
 
 def run_video_stream():
-    source_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/avatars/person_1/light-100_temp-5600/garment_1/freestyle/cam1'
+    source_dir = '/home/darkalert/Desktop/adaptive_train/videos/anton'
     output_dir = '/home/darkalert/Desktop/adaptive_train/tests/holoport/video_last'
     # stream = VideoStream(source_dir, out_fps=20, skip_each_i_frame=3, output_dir=output_dir)
     stream = VideoStream(source_dir, out_fps=30, skip_each_i_frame=None, output_dir=output_dir)
-    stream.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_live')
+    stream.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_rotation_last')
 
 def run_video_saver():
     VideoSaver('/home/darkalert/Desktop/adaptive_train/videos/last', area_box=(290,10,700,700))
 
 def main(path_to_conf):
-    # run_live_stream()
-    run_video_stream()
+    run_live_stream()
+    # run_video_stream()
     # run_video_saver()
 
 if __name__ == '__main__':

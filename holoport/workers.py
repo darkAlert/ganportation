@@ -73,12 +73,8 @@ def pre_yolo_worker(args, break_event, input_q, output_q, aux_params, timeout=0.
     print('pre_yolo_worker has been run...')
 
     # Parse auxiliary params:
-    dummy_scene_bbox = aux_params['scene_bbox']
-    dummy_scene_cbbox = aux_params['scene_cbbox']
-    steps = aux_params['steps']
-    view = aux_params['view']
-    delta = 360 / steps        # view changing params
-    step_i = 0
+    scene_bbox = aux_params['scene_bbox']
+    scene_cbbox = aux_params['scene_cbbox']
 
     while not break_event.is_set():
         try:
@@ -87,19 +83,9 @@ def pre_yolo_worker(args, break_event, input_q, output_q, aux_params, timeout=0.
         except Empty:
             continue
 
-        # Update avatar view:
-        # view['R'][0] = 0
-        # view['R'][1] = delta * step_i / 180.0 * np.pi
-        # view['R'][2] = 0
-        data['lwgan_input_view'] = view
-
         # Set scene bbox and cbbox:
-        data['scene_bbox'] = dummy_scene_bbox
-        data['scene_cbbox'] = dummy_scene_cbbox
-
-        step_i += 1
-        if step_i >= steps:
-            step_i = 0
+        data['scene_bbox'] = scene_bbox
+        data['scene_cbbox'] = scene_cbbox
 
         # Prepare YOLO input:
         data = pre_yolo(data, args)
@@ -143,8 +129,14 @@ def pre_vibe_worker(args, break_event, input_q, output_q, timeout=0.005, scene_f
     return True
 
 
-def pre_lwgan_worker(args, break_event, input_q, output_q, timeout=0.005):
+def pre_lwgan_worker(args, break_event, input_q, output_q, aux_params, timeout=0.005):
     print('pre_lwgan_worker has been run...')
+
+    # View changing params:
+    steps = aux_params['steps']
+    view = aux_params['view']
+    delta = 360 / steps
+    step_i = 0
 
     while not break_event.is_set():
         try:
@@ -160,9 +152,22 @@ def pre_lwgan_worker(args, break_event, input_q, output_q, timeout=0.005):
         # Prepare VIBE output:
         data = post_vibe(data)
 
+        # Update avatar view:
+        view['R'][0] = 0
+        view['R'][1] = delta * step_i / 180.0 * np.pi
+        view['R'][2] = 0
+        if 'new_R' in data:
+            view['R'][1] = data['new_R']
+        data['lwgan_input_view'] = view
+
         # Prepare LWGAN input:
         data = pre_lwgan(data, args)
         output_q.put(data)
+
+        step_i += 1
+        if step_i >= steps:
+            step_i = 0
+
 
     print('pre_lwgan_worker has been terminated.')
 

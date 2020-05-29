@@ -195,7 +195,7 @@ class HoloportAdaModel(object):
         self.workers.append(threading.Thread(target=pre_yolo_worker, args=worker_args))
         worker_args = (self.vibe_args, self.break_event, self.yolo_output_q, self.vibe_input_q, 0.005, True)
         self.workers.append(threading.Thread(target=pre_vibe_worker, args=worker_args))
-        worker_args = (self.pre_lwgan_args, self.break_event, self.vibe_output_q, self.draw_q)
+        worker_args = (self.pre_lwgan_args, self.break_event, self.vibe_output_q, self.draw_q, self.aux_params)
         self.workers.append(threading.Thread(target=pre_lwgan_worker, args=worker_args))
         worker_args = (self.yolo, self.vibe, self.break_event, self.yolo_input_q,
                        self.yolo_output_q, self.vibe_input_q, self.vibe_output_q)
@@ -232,7 +232,7 @@ class HoloportAdaModel(object):
                 break
 
             if frame is not None:
-                frame = increase_brightness(frame, 10)
+                # frame = increase_brightness(frame, 10)
                 data = {'frame': frame.copy(), 'start': time.time()}
                 self.frame_q.put(data, timeout=0.005)
             else:
@@ -308,8 +308,6 @@ class HoloportAdaModel(object):
         if self.break_event.is_set():
             self.connector.logger.info('ADA: Training has been interrupted!')
             return False
-
-        # 3. Run HoloportModel with the trained model:
 
         self.connector.logger.info('ADA: Adaptive training has been completed!')
         return True
@@ -399,14 +397,16 @@ def run_live_stream():
     stream = LiveStream(output_dir)
     stream.run_model(HoloportAdaModel, path_to_conf=path_to_conf, label='holoport_adaptive_training')
 
-def run_video_stream(output_dir):
-    output_dir = None#'/home/darkalert/Desktop/adaptive_train/tests/ada/video_last'
-    stream = VideoStream(output_dir, out_fps=20, skip_each_i_frame=3)
+
+def run_video_stream():
+    source_dir = '/home/darkalert/Desktop/adaptive_train/videos/my_video-1_hd'
+    output_dir = None#'/home/darkalert/Desktop/adaptive_train/tests/holoport/video_last'
+    stream = VideoStream(source_dir, out_fps=20, skip_each_i_frame=3, output_dir=output_dir)
     stream.run_model(HoloportAdaModel, path_to_conf=path_to_conf, label='holoport_adaptive_training')
 
 def main(path_to_conf):
-    run_live_stream()
-    # run_video_stream()
+    # run_live_stream()
+    run_video_stream()
 
 if __name__ == '__main__':
     path_to_conf = 'adaptive_training.yaml'

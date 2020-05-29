@@ -1,4 +1,6 @@
+import os
 import time
+import torch
 from lwganrt.options.train_options import TrainOptions
 from lwganrt.data.custom_dataset_data_loader import CustomDatasetDataLoader
 from lwganrt.models.models import ModelsFactory
@@ -19,6 +21,8 @@ class LWGANTrainer(object):
         self._tb_visualizer = TBVisualizer(self._opt)
 
         self._train(callback)
+
+        self._save_desc()
 
     def _train(self, callback):
         self._total_steps = self._opt.load_epoch * self._dataset_train_size
@@ -87,11 +91,38 @@ class LWGANTrainer(object):
                 self._display_visualizer_train(self._total_steps)
                 self._last_display_time = time.time()
 
-            # # save model
+            # save model
             # if self._last_save_latest_time is None or time.time() - self._last_save_latest_time > self._opt.save_latest_freq_s:
             #     print('saving the latest model (epoch %d, total_steps %d)' % (i_epoch, self._total_steps))
             #     self._model.save(i_epoch)
             #     self._last_save_latest_time = time.time()
+        # self._model.save(i_epoch)
+
+    def _save_desc(self):
+        dest_dir = os.path.join(self._opt.checkpoints_dir, 'desc_last')
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
+
+        self._model.set_eval()
+        counter = 0
+
+        with torch.no_grad():
+            for train_batch in self._dataset_train:
+                images = train_batch['images']
+                smpls = train_batch['smpls']
+                src_img = images[:, 0, ...]
+                src_smpl = smpls[:, 0, ...]
+                bn = images.shape[0]
+
+                for i in range(bn):
+                    img_path = os.path.join(dest_dir, str(counter).zfill(5) + '.img')
+                    smpl_path = os.path.join(dest_dir, str(counter).zfill(5) + '.smpl')
+                    img = src_img[i].clone().unsqueeze(0)
+                    smpl = src_smpl[i].clone().unsqueeze(0)
+                    torch.save(img, img_path)
+                    torch.save(smpl, smpl_path)
+                    counter += 1
+
 
     def _display_terminal(self, iter_start_time, i_epoch, i_train_batch, visuals_flag):
         errors = self._model.get_current_errors()

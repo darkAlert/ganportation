@@ -64,18 +64,22 @@ lwgan_ada:
   image_size: 256
   lambda_rec: 10.0
   lambda_tsf: 10.0
-  lambda_face: 5.0
+  lambda_face_: 5.0
+  lambda_face: 10.0
   lambda_style: 0.0
-  lambda_mask: 1.0
-  lambda_mask_smooth: 1.0
+  lambda_mask_: 1.0
+  lambda_mask: 0.0
+  lambda_mask_smooth_: 1.0
+  lambda_mask_smooth: 0.0
   name: 'ada_last'
   mask_bce: True
   use_vgg: True
   use_face: True
+  use_style: False  
   train_D: True
   lr_G: 0.0002
-  nepochs_no_decay: 3
-  nepochs_decay: 5
+  nepochs_no_decay: 4
+  nepochs_decay: 2
   batch_size: 14
   gpu_ids: '0'
 

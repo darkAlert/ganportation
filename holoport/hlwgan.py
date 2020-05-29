@@ -40,7 +40,7 @@ class HoloLwganRT:
             assert view is not None
             preds = self.holoport_model.view(view['R'], view['t'])
         else:
-            preds = self.holoport_model.inference(smpl)
+            preds = self.holoport_model.inference(smpl, view=view)
 
         return preds[0]
 

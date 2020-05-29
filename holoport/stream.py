@@ -23,14 +23,22 @@ class Logger():
     def info(self, text):
         print ('[{}]: {}'.format(self.name, text))
 
+class ClientData():
+    def horizontal_rotation(self):
+        return 0
 
 class LiveStream():
-    def __init__(self, output_dir=None):
+    def __init__(self, output_dir=None, resolution=(1280,720)):
         self.logger = Logger('LiveStream')
         self.model = None
         self.stop_event = threading.Event()
         self.cap = cv2.VideoCapture(0)
         self.output_dir = output_dir
+        self.client_data = ClientData()
+
+        if resolution is not None:
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, resolution[0])
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, resolution[1])
 
         if self.output_dir:
             clear_dir(self.output_dir)
@@ -87,6 +95,7 @@ class VideoStream():
         self.stop_event = threading.Event()
         self.cap = self._read_source(source_dir, skip_each_i_frame)
         self.fps = out_fps
+        self.client_data = ClientData()
         self.output_dir = output_dir
         if self.output_dir:
             clear_dir(self.output_dir)
