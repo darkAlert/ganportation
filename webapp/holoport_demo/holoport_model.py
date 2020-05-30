@@ -115,7 +115,7 @@ def generate_aux_params(conf):
 
 
 class HoloportModel(object):
-    LABEL = ['holoport_latest, holoport']  # ignore the model
+    LABEL = ['holoport_latest']  # ignore the model
     SENDS_VIDEO = True
     SENDS_DATA = True
     CONTROLS = ['horizontal-rotation']
@@ -236,7 +236,6 @@ class HoloportModel(object):
                 frame = increase_brightness(frame, 10)
                 data = {'frame': frame.copy(), 'start': time.time()}
                 data['new_R'] = self.connector.client_data.horizontal_rotation()
-                print ('1:',data['new_R'])
                 self.frame_q.put(data, timeout=0.005)
             else:
                 self.stop()
