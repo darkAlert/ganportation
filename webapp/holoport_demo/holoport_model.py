@@ -165,10 +165,10 @@ class HoloportModel(object):
             elif label == 'holoport_adaptive':
                 self.lwgan.ada_conf = conf['adaptive']
                 self.adaptive = True
-            elif label == 'holoport_rotation_last':
+            elif label == 'holoport_rotation_latest':
                 conf['input']['steps'] = 90
                 self.lwgan.load_descriptor(conf['lwgan']['desc_img'], conf['lwgan']['desc_smpl'])
-            elif label == 'holoport_last':
+            elif label == 'holoport_latest':
                 self.lwgan.load_descriptor(conf['lwgan']['desc_img'], conf['lwgan']['desc_smpl'])
 
         # Warmup:
