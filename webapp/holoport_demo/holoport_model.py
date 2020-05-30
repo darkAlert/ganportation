@@ -115,7 +115,7 @@ def generate_aux_params(conf):
 
 
 class HoloportModel(object):
-    LABEL = ['holoport_latest']  # ignore the model
+    LABEL = ['holoport_latest, holoport']  # ignore the model
     SENDS_VIDEO = True
     SENDS_DATA = True
     CONTROLS = ['horizontal-rotation']
