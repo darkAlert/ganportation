@@ -157,7 +157,7 @@ def pre_lwgan_worker(args, break_event, input_q, output_q, aux_params, timeout=0
         view['R'][1] = delta * step_i / 180.0 * np.pi
         view['R'][2] = 0
         if 'new_R' in data:
-            view['R'][1] = data['new_R']
+            view['R'][1] = data['new_R'] / 180.0 * np.pi
         data['lwgan_input_view'] = view
 
         # Prepare LWGAN input:
