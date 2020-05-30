@@ -115,9 +115,10 @@ def generate_aux_params(conf):
 
 
 class HoloportModel(object):
-    LABEL = ['holoport', 'holoport_last', 'holoport_rotation_last', 'holoport_andrey', 'holoport_yulia']  # ignore the model
+    LABEL = ['holoport_latest']  # ignore the model
     SENDS_VIDEO = True
     SENDS_DATA = True
+    CONTROLS = ['horizontal-rotation']
 
     def __init__(self, connector, label=None, path_to_conf=None):
         self.connector = connector
