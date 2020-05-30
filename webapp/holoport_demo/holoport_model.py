@@ -130,7 +130,7 @@ class HoloportModel(object):
             if label is not None and label == 'holoport_adaptive':
                 path_to_conf = 'yolo-vibe-lwgan_adaptive.yaml'
             elif label is not None and \
-                    any(label == l for l in ['holoport_last', 'holoport_rotation_last']):
+                    any(label == l for l in ['holoport_latest', 'holoport_rotation_last']):
                 path_to_conf = 'yolo-vibe-lwgan_last.yaml'
             else:
                 path_to_conf = 'yolo-vibe-lwgan_live.yaml'
