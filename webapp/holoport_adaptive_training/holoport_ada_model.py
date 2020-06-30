@@ -405,8 +405,8 @@ def run_video_stream():
     stream.run_model(HoloportAdaModel, path_to_conf=path_to_conf, label='holoport_adaptive_training')
 
 def main(path_to_conf):
-    # run_live_stream()
-    run_video_stream()
+    run_live_stream()
+    # run_video_stream()
 
 if __name__ == '__main__':
     path_to_conf = 'adaptive_training.yaml'

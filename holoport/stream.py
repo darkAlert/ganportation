@@ -24,8 +24,11 @@ class Logger():
         print ('[{}]: {}'.format(self.name, text))
 
 class ClientData():
+    def __init__(self):
+        self.deg = 0
+
     def horizontal_rotation(self):
-        return 0
+        return self.deg
 
 class LiveStream():
     def __init__(self, output_dir=None, resolution=(1280,720)):
@@ -76,8 +79,19 @@ class LiveStream():
         if self.stop_event.is_set():
             return
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        key = cv2.waitKey(1)
+        if key & 0xFF== ord('q'):
             self.stop_event.set()
+        elif key == 81:
+            new_deg = self.client_data.deg - 10
+            if new_deg < 0:
+                new_deg = 360
+            self.client_data.deg = new_deg
+        elif key == 83:
+            new_deg = self.client_data.deg + 10
+            if new_deg > 360:
+                new_deg = 0
+            self.client_data.deg = new_deg
 
         cv2.imshow('LiveStream', frame)
 
@@ -169,7 +183,7 @@ class VideoStream():
 
 class VideoSaver():
     def __init__(self, output_dir, area_box=None):
-        clear_dir(self.output_dir)
+        clear_dir(output_dir)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 

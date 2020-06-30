@@ -256,14 +256,14 @@ def run_live_stream():
     output_dir = '/home/darkalert/Desktop/adaptive_train/tests/holoport/live_last'
     stream = LiveStream(output_dir)
     # stream.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_live')
-    stream.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_last')
+    stream.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_latest')
 
 def run_video_stream():
     source_dir = '/home/darkalert/Desktop/adaptive_train/videos/anton'
     output_dir = '/home/darkalert/Desktop/adaptive_train/tests/holoport/video_last'
     # stream = VideoStream(source_dir, out_fps=20, skip_each_i_frame=3, output_dir=output_dir)
     stream = VideoStream(source_dir, out_fps=30, skip_each_i_frame=None, output_dir=output_dir)
-    stream.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_rotation_last')
+    stream.run_model(HoloportModel, path_to_conf=path_to_conf, label='holoport_latest')
 
 def run_video_saver():
     VideoSaver('/home/darkalert/Desktop/adaptive_train/videos/last', area_box=(290,10,700,700))
