@@ -11,22 +11,6 @@ from holoport.smpl_renderer import NeuralSmplRenderer
 from holoport.stream import LiveStream, VideoStream
 
 
-def box_fits_into_scene(bbox, scene_bbox):
-    '''
-    Check if the predicted yolo box fits into the scene box
-    '''
-    scence_x1, scence_x2 = scene_bbox[0], scene_bbox[0] + scene_bbox[2]
-    scence_y1, scence_y2 = scene_bbox[1], scene_bbox[1] + scene_bbox[3]
-    x = bbox[0]+int(round(bbox[2]*0.5))
-    y1, y2 = bbox[1], bbox[1] + bbox[3]
-
-    if y1 < scence_y1 or y2 > scence_y2:
-        return False
-    if x < scence_x1 or x > scence_x2:
-        return False
-
-    return True
-
 
 def renderer_worker(renderer_conf, break_event, input_q, output_q, timeout=0.005):
     print('renderer_worker has been run...')
@@ -168,15 +152,15 @@ def generate_aux_params(conf):
     return aux_params
 
 
-class YoloVibeModel(object):
-    LABEL = ['yolo-vibe-nr_live']
+class RetinaFaceAUsModel(object):
+    LABEL = ['retinaface+aus_live']
     SENDS_VIDEO = True
     SENDS_DATA = True
 
-    def __init__(self, connector, label=None, path_to_conf='yolo-vibe-nr_live.yaml'):
+    def __init__(self, connector, label=None, path_to_conf='retinaface-aus_live.yaml'):
         self.connector = connector
         self.connector.enable_frame_throw()
-        self.name = 'YoloVibeModel'
+        self.name = 'RetinaFaceAUsModel'
 
         # Load config:
         path_to_conf = os.path.join(os.path.dirname(__file__), path_to_conf)

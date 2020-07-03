@@ -10,3 +10,7 @@
 	path = thirdparty/yolo
 	url = https://holoanton@bitbucket.org/kazendi/yolov3.git
 	branch = RT
+[submodule "thirdparty/retinafacert"]
+	path = thirdparty/retinafacert
+	url = https://holoanton@bitbucket.org/kazendi/retinafacert.git
+	branch = RT
