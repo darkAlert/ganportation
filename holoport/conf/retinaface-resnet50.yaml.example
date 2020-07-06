@@ -1,0 +1,16 @@
+retinaface:
+  model_path: '/home/user/RetinaFace/weights/Resnet50_Final.pth'
+  pretrain_mobilenet: ''
+  network: 'resnet50'
+  threshold: 0.6
+  img_width: 1920
+  img_hight: 1080
+  gpu_id: '0'
+
+input:
+  warmup_img: '/home/user/holoportrt/holoport/tests/samples/img0.jpeg'
+  frames_dir: '/home/user/HoloVideo/Data/frames'
+  target_path: 'person_2/light-100_temp-5600/garments_2/front_position/cam1'
+
+output:
+  result_dir: '/home/user/test/retinaface/t1'
