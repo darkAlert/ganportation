@@ -52,6 +52,10 @@ class HoloRetinaFaceRT():
         net = RetinaFace(cfg=self.cfg, phase='test')
         net = load_model(net, args.rf_trained_model, self.device)
         net.eval()
+        if args.cudnn_benchmark:
+            import torch.backends.cudnn as cudnn
+            cudnn.benchmark = True
+            print ('cudnn benchmark is enabled!')
         self.net = net.to(self.device)
 
         # Scale:
@@ -161,9 +165,9 @@ def init_retinaface(conf):
     parser.add_argument('--rf_img_width', default=1920, type=int, help='img_width')
     parser.add_argument('--rf_img_hight', default=1080, type=int, help='img_hight')
     parser.add_argument('--rf_gpu_id', default='0', type=str, help='CUDA device id')
+    parser.add_argument('--cudnn_benchmark', action="store_true", default=False,
+                        help='Enable cudnn benchmark. It has impact when using mobilenet')
     args, _ = parser.parse_known_args()
-
-
 
     # Set params:
     args.rf_trained_model = conf['model_path']
@@ -173,6 +177,7 @@ def init_retinaface(conf):
     args.rf_img_width = conf['img_width']
     args.rf_img_hight = conf['img_hight']
     args.rf_gpu_id = conf['gpu_id']
+    args.cudnn_benchmark = conf['cudnn_benchmark']
 
     # Init vibe:
     print('Initializing RetinaFace...')
