@@ -90,7 +90,7 @@ class HoloRetinaFaceRT():
             # Move to device:
             frame = frame.to(self.device)
 
-            # Predict:
+            # Forward pass:
             loc, conf, landms = self.net(frame)
 
             # Decode the predictions:
@@ -225,6 +225,12 @@ if __name__ == '__main__':
     from holoport.conf.conf_parser import parse_conf
     import time
     import os
+    import pickle
+
+    def write_pickle_file(pkl_path, data_dict):
+        with open(pkl_path, 'wb') as fp:
+            pickle.dump(data_dict, fp, protocol=2)
+
 
     # Init RetinaFace:
     conf = parse_conf('./holoport/conf/local/retinaface-resnet50.yaml')
@@ -237,7 +243,7 @@ if __name__ == '__main__':
     img = prepare_input(img_raw, conf['retinaface']['img_width'], conf['retinaface']['img_hight'])
 
     # 20 identical runs to test:
-    result_img = None
+    result_img, detections = None, None
     for i in range(20):
         # Inference:
         tic = time.time()
@@ -257,5 +263,7 @@ if __name__ == '__main__':
         os.makedirs(conf['output']['result_dir'])
     dst_path = os.path.join(conf['output']['result_dir'], 'test.jpeg')
     cv2.imwrite(dst_path, result_img)
+    dst_path = os.path.join(conf['output']['result_dir'], 'test_faces.pkl')
+    write_pickle_file(dst_path, detections)
 
-    print ('The resulting image has been saved to', dst_path)
+    print ('The results have been saved to', dst_path)
