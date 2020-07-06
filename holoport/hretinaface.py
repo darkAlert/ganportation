@@ -76,29 +76,34 @@ class HoloRetinaFaceRT():
         priors = priors.to(self.device)
         self.prior_data = priors.data
 
+        if warmup:
+            dummy = torch.zeros((1, 3, args.rf_img_hight, args.rf_img_width))
+            self.inference(dummy)
+
 
     def inference(self, frame):
-        if frame.ndimension() == 3:
-            frame = frame.unsqueeze(0)
+        with torch.no_grad():
+            if frame.ndimension() == 3:
+                frame = frame.unsqueeze(0)
 
-        # Move to device:
-        frame = frame.to(self.device)
+            # Move to device:
+            frame = frame.to(self.device)
 
-        # Predict:
-        loc, conf, landms = self.net(frame)
+            # Predict:
+            loc, conf, landms = self.net(frame)
 
-        # Decode the predictions:
-        boxes = decode(loc.data.squeeze(0), self.prior_data, self.cfg['variance'])
-        boxes = boxes * self.scale / self.resize
-        boxes = boxes.cpu().numpy()
+            # Decode the predictions:
+            boxes = decode(loc.data.squeeze(0), self.prior_data, self.cfg['variance'])
+            boxes = boxes * self.scale / self.resize
+            boxes = boxes.cpu().numpy()
 
-        scores = conf.squeeze(0).data.cpu().numpy()[:, 1]
+            scores = conf.squeeze(0).data.cpu().numpy()[:, 1]
 
-        landms = decode_landm(landms.data.squeeze(0), self.prior_data, self.cfg['variance'])
-        landms = landms * self.scale1 / self.resize
-        landms = landms.cpu().numpy()
+            landms = decode_landm(landms.data.squeeze(0), self.prior_data, self.cfg['variance'])
+            landms = landms * self.scale1 / self.resize
+            landms = landms.cpu().numpy()
 
-        return boxes, landms, scores
+            return boxes, landms, scores
 
 
 def prepare_input(img_raw, target_width=None, target_height=None):
