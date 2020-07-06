@@ -1,6 +1,7 @@
 import argparse
 import torch
 import numpy as np
+import cv2
 from retinaface.data import cfg_mnet, cfg_re50
 from retinaface.models.retinaface import RetinaFace
 from retinaface.layers.functions.prior_box import PriorBox
@@ -222,7 +223,6 @@ def vizualize_detections(img, detections):
 
 if __name__ == '__main__':
     from holoport.conf.conf_parser import parse_conf
-    import cv2
     import time
     import os
 
