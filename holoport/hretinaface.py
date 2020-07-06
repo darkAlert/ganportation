@@ -101,7 +101,12 @@ class HoloRetinaFaceRT():
         return boxes, landms, scores
 
 
-def prepare_input(img_raw):
+def prepare_input(img_raw, target_width=None, target_height=None):
+    if target_width is not None and target_height is not None and \
+                    target_width != img_raw.shape[1] or target_height != img_raw.shape[0]:
+        interp = cv2.INTER_AREA if target_width < img_raw.shape[1] else cv2.INTER_CUBIC
+        img_raw = cv2.resize(img_raw, (target_width,target_height), interpolation=interp)
+
     img = np.float32(img_raw)
     img -= (104, 117, 123)
     img = img.transpose(2, 0, 1)
@@ -224,11 +229,12 @@ if __name__ == '__main__':
     # Load an image:
     img_path = conf['input']['warmup_img']
     img_raw = cv2.imread(img_path, cv2.IMREAD_COLOR)
-    img = prepare_input(img_raw)
+    img = prepare_input(img_raw, conf['retinaface']['img_width'], conf['retinaface']['img_hight'])
 
-    # Inference (20 identical runs to test):
+    # 20 identical runs to test:
     result_img = None
     for i in range(20):
+        # Inference:
         tic = time.time()
         boxes, landms, scores = retinaface.inference(img)
 
