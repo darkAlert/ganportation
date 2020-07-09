@@ -242,10 +242,20 @@ class RetinaAUsModel(object):
         return True
 
 
-def main(path_to_conf):
-    output_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/retina-aus2/live'
+def run_live_stream(path_to_conf):
+    output_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/retina-aus/live'
     live = LiveStream(output_dir)
     live.run_model(RetinaAUsModel, path_to_conf=path_to_conf)
+
+def run_video_stream(path_to_conf):
+    source_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/andrey'
+    output_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/retina-aus/video_last'
+    stream = VideoStream(source_dir, out_fps=30, skip_each_i_frame=None, output_dir=output_dir)
+    stream.run_model(RetinaAUsModel, path_to_conf=path_to_conf, label='retina+aus_live')
+
+def main(path_to_conf):
+    run_live_stream(path_to_conf)
+    # run_video_stream(path_to_conf)
 
 if __name__ == '__main__':
     path_to_conf = 'retina-aus_live.yaml'
