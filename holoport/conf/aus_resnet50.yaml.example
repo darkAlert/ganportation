@@ -1,6 +1,7 @@
 aus:
   model_path: '/home/user/models/action_units_model_resnet_50.pt'
-  img_size: 224
+  face_size: 224
+  make_dict: True
   gpu_id: '0'
 
 input:
