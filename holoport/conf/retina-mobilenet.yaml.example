@@ -5,6 +5,7 @@ retina:
   threshold: 0.6
   img_width: 1920
   img_hight: 1080
+  main_face: True
   gpu_id: '0'
   cudnn_benchmark: True
 
