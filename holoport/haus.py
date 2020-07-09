@@ -1,6 +1,7 @@
 import argparse
 import torch
 import numpy as np
+import cv2
 from holoport.utils import norm_face
 
 
@@ -47,13 +48,16 @@ def init_aus(conf):
     # Parse params:
     parser = argparse.ArgumentParser(description='ActionUnits')
     parser.add_argument('--au_model', default='', type=str, help='Trained state_dict file path to open')
-    parser.add_argument('--au_img_size', default=224, type=int, help='img_size')
+    parser.add_argument('--au_face_size', default=224, type=int, help='input face size')
+    parser.add_argument('--au_make_dict', action="store_true", default=False,
+                        help='output raw AUs vector or make AUs dictionary containing AU names')
     parser.add_argument('--au_gpu_id', default='0', type=str, help='CUDA device id')
     args, _ = parser.parse_known_args()
 
     # Set params:
     args.au_model = conf['model_path']
-    args.au_img_size = conf['img_size']
+    args.au_face_size = conf['face_size']
+    args.au_make_dict = conf['make_dict']
     args.au_gpu_id = conf['gpu_id']
 
     # Init vibe:
@@ -86,6 +90,46 @@ def make_aus_dict(raw_aus):
     return aus_dict
 
 
+def vizualize_aus(img, aus, dets):
+    for au, det in zip(aus, dets):
+        if isinstance(au, dict):
+            eye_blink_left = au['eye_blink_right']**0.5
+            jaw_open = au['jaw_open']
+            eye_blink_right = au['eye_blink_left']**0.5
+        else:
+            eye_blink_left = au[8]
+            eye_blink_right = au[9]
+            jaw_open = au[24]
+
+        box = det['box']
+        height = box[3] - box[1]
+        bin_h = int(height*0.3)
+        bin_w = int(bin_h*0.25)
+        y = box[1] + int(height*0.5)
+        x = box[2] + 3
+
+        # eye_blink_left
+        cv2.rectangle(img, (x, y - bin_h), (x + bin_w, y), (128, 128, 128), -1)
+        bin_y = int(eye_blink_left*bin_h)
+        cv2.rectangle(img, (x, y - bin_y), (x + bin_w, y), (0, 255, 0), -1)
+
+        # jaw_open
+        x = x + bin_w + int(bin_w*0.5)
+        cv2.rectangle(img, (x, y - bin_h), (x + bin_w, y), (128, 128, 128), -1)
+        bin_y = int(jaw_open * bin_h)
+        cv2.rectangle(img, (x, y - bin_y), (x + bin_w, y), (0, 0, 255), -1)
+
+        # eye_blink_right
+        x = x + bin_w + int(bin_w * 0.5)
+        cv2.rectangle(img, (x, y - bin_h), (x + bin_w, y), (128, 128, 128), -1)
+        bin_y = int(eye_blink_right * bin_h)
+        cv2.rectangle(img, (x, y - bin_y), (x + bin_w, y), (255, 0, 0), -1)
+
+
+
+    return img
+
+
 if __name__ == '__main__':
     from holoport.conf.conf_parser import parse_conf
     import time
@@ -110,7 +154,7 @@ if __name__ == '__main__':
     # Load landmarks for the image:
     faces = load_pickle_file(conf['input']['warmup_face'])
     landmarks = faces[0]['landms']
-    face_img = prepare_input(img_raw, landmarks, args.au_img_size)
+    face_img = prepare_input(img_raw, landmarks, args.au_face_size)
 
     # 20 identical runs to test:
     aus_raw = None
