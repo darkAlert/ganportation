@@ -155,7 +155,7 @@ def send_worker(break_event, input_q, send_data, send_frame, timeout=0.005):
         cv2.putText(data['result_frame'], text, (5, 105), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 0, 0), 2)
 
         # Send data:
-        send_data(dict(fps=fps))
+        send_data(dict(dets=data['dets'], aus=data['aus']))
         send_frame(data['result_frame'])
 
     print('send_worker has been terminated.')
@@ -224,7 +224,7 @@ class RetinaAUsModel(object):
                 break
 
             if frame is not None:
-                frame = increase_brightness(frame, 10)
+                # frame = increase_brightness(frame, 10)
                 data = {'frame': frame.copy(), 'start': time.time()}
                 self.frame_q.put(data, timeout=0.005)
             else:
@@ -243,7 +243,7 @@ class RetinaAUsModel(object):
 
 
 def main(path_to_conf):
-    output_dir = None#'/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/yolo_vibe/live'
+    output_dir = '/home/darkalert/KazendiJob/Data/HoloVideo/Data/test/rt/retina-aus2/live'
     live = LiveStream(output_dir)
     live.run_model(RetinaAUsModel, path_to_conf=path_to_conf)
 

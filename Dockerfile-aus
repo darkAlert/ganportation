@@ -1,0 +1,69 @@
+FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
+#FROM nvidia/cuda:10.1-cudnn7-runtime-ubuntu18.04
+
+ENV DEBIAN_FRONTEND=noninteractive LANG=C TZ=UTC
+
+# install some basic utilities:
+RUN set -xue ;\
+    apt-get update ;\
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        libsm6 \
+        libxext6 \
+        libxrender-dev \
+        libglib2.0-0 \
+        unzip \
+        wget \
+        git \
+        python3-dev \
+        python3-pip \
+        python3-yaml \
+        ninja-build \
+    ;\
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --upgrade pip==20.0.2
+
+# download AzCopy utility
+RUN mkdir -p /usr/src/utils ;\
+    wget -O /usr/src/utils/azcopy_linux.tar.gz https://aka.ms/downloadazcopy-v10-linux ;\
+    tar -xvzf /usr/src/utils/azcopy_linux.tar.gz --strip 1 -C /usr/src/utils
+
+# download retinaface_data from Azure Blob Storage
+RUN mkdir -p /usr/src/models ;\
+    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/models/retinaface_data.tar.gz?sp=rl&st=2020-07-09T11:30:37Z&se=2020-09-10T11:30:00Z&sv=2019-10-10&sr=b&sig=vlNVcV6vQ%2FZkt6Sb9OM%2BVJDVaJNkBlaDC6KByGhtrzM%3D" "/usr/src/models/retinaface_data.tar.gz" ;\
+    tar -xvf /usr/src/models/retinaface_data.tar.gz -C /usr/src/models ;\
+    rm /usr/src/models/retinaface_data.tar.gz
+
+# download action_units_model from Azure Blob Storage
+RUN mkdir -p /usr/src/data ;\
+    /usr/src/utils/azcopy copy "https://holoportation.blob.core.windows.net/holoportation-rt/models/action_units_model_resnet_50.pt?sp=rl&st=2020-07-09T11:27:28Z&se=2020-09-10T11:27:00Z&sv=2019-10-10&sr=b&sig=iYX9KZLxIs7yZm7JDwMuyNLJ1%2FzI9qA1PLNhkws2ti8%3D" "/usr/src/data/action_units_model_resnet_50.pt"
+
+# install pytorch and torchvision with cuda101:
+RUN pip3 install \
+    https://download.pytorch.org/whl/cu101/torch-1.4.0-cp36-cp36m-linux_x86_64.whl \
+    https://download.pytorch.org/whl/cu101/torchvision-0.5.0-cp36-cp36m-linux_x86_64.whl
+
+# copy all files to the container
+WORKDIR /usr/src/app
+COPY . .
+
+# install dependencies
+RUN pip3 install --no-cache-dir -r requirements.txt ;\
+    pip3 install --no-cache-dir -r thirdparty/retinafacert/requirements.txt
+
+# install HOLOPORT-RT
+RUN python3 setup.py install
+
+# install RetinaFace-RT
+WORKDIR /usr/src/app/thirdparty/retinafacert
+RUN python3 setup.py install
+
+# set a directory for the app
+WORKDIR /usr/src/app
+
+# make a subdir to save the results
+RUN mkdir -p /usr/src/app/outputs
+
+# run the command
+CMD ["python3"]
