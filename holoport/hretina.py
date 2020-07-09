@@ -121,7 +121,7 @@ def prepare_input(img_raw, target_width=None, target_height=None):
     return img
 
 
-def filter_detections(boxes, landms, scores, threshold=0.6):
+def filter_detections(boxes, landms, scores, args):
     # ignore low scores
     inds = np.where(scores > args.rf_confidence_threshold)[0]
     boxes = boxes[inds]
@@ -147,7 +147,7 @@ def filter_detections(boxes, landms, scores, threshold=0.6):
     results = []
     for b, l in zip(dets,landms):
         prob = b[4]
-        if prob < threshold:
+        if prob < args.rf_det_threshold:
             continue
         box = list(map(int, b[:4]))
         landmarks = list(map(int, l[:10]))
@@ -155,6 +155,12 @@ def filter_detections(boxes, landms, scores, threshold=0.6):
                'prob': prob,
                'landms': landmarks}
         results.append(det)
+
+    #  Choose the preson with the largest bbox area:
+    if args.rf_main_face and len(results):
+        areas = [(det['box'][2] - det['box'][0]) * (det['box'][3] - det['box'][1]) for det in results]
+        max_id = max(enumerate(areas), key=lambda x: x[1])[0]
+        results = [results[max_id]]
 
     return results
 
@@ -178,6 +184,8 @@ def init_retina(conf):
     parser.add_argument('--rf_gpu_id', default='0', type=str, help='CUDA device id')
     parser.add_argument('--cudnn_benchmark', action="store_true", default=False,
                         help='Enable cudnn benchmark. It has impact when using mobilenet')
+    parser.add_argument('--rf_main_face', action="store_true", default=False,
+                        help='Retina returns only the largest face in the frame')
     args, _ = parser.parse_known_args()
 
     # Set params:
@@ -189,6 +197,7 @@ def init_retina(conf):
     args.rf_img_hight = conf['img_hight']
     args.rf_gpu_id = conf['gpu_id']
     args.cudnn_benchmark = conf['cudnn_benchmark']
+    args.rf_main_face = conf['main_face']
 
     # Init vibe:
     print('Initializing RetinaFace...')
@@ -249,8 +258,8 @@ if __name__ == '__main__':
         tic = time.time()
         boxes, landms, scores = retina.inference(img)
 
-        # Filter predictions on CPU:
-        detections = filter_detections(boxes, landms, scores, args.rf_det_threshold)
+        # Filter detections on CPU:
+        detections = filter_detections(boxes, landms, scores, args)
         tac = time.time()
 
         # Visualize the detections:
