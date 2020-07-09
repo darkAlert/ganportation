@@ -1,0 +1,22 @@
+retina:
+  model_path: '/usr/src/models/yolo_data/retinaface_data/mobilenet0.25_Final.pth'
+  pretrain_mobilenet: '/usr/src/models/yolo_data/retinaface_data/mobilenetV1X0.25_pretrain.tar'
+  network: 'mobile0.25'
+  threshold: 0.6
+  img_width: 1280
+  img_hight: 720
+  main_face: True
+  gpu_id: '0'
+  cudnn_benchmark: False
+
+aus:
+  model_path: '/usr/src/data/action_units_model_resnet_50.pt'
+  face_size: 224
+  make_dict: True
+  gpu_id: '0'
+
+input:
+  warmup_img: '/usr/src/app/holoportrt/holoport/tests/samples/img0.jpeg'
+
+output:
+  result_dir: '/usr/src/app/outputs/retinaface-aus/'
