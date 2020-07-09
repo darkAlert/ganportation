@@ -163,6 +163,49 @@ def send_worker(break_event, input_q, send_data, send_frame, timeout=0.005):
     return True
 
 
+def warmup_pipeline(img, retina, retina_args, aus_model, aus_args):
+    print('Warming up RetinaFace+AUs pipeline...')
+    assert img is not None
+    data = {'frame': img}
+
+    # Prepare RetinaFace input:
+    data['retina_input'] = prepare_retina_input(data['frame'],
+                                                retina_args.rf_img_width,
+                                                retina_args.rf_img_hight)
+
+    # Inference by the RetinaFace:
+    boxes, landms, scores = retina.inference(data['retina_input'])
+    data['raw_dets'] = (boxes, landms, scores)
+
+    # Filter the RetinaFace detections:
+    boxes, landms, scores = data['raw_dets']
+    data['dets'] = filter_detections(boxes, landms, scores, retina_args)
+
+    # Prepare AUs input:
+    faces = []
+    for det in data['dets']:
+        face_img = prepare_aus_input(data['frame'], det['landms'], aus_args.au_face_size)
+        faces.append(face_img)
+    data['faces'] = faces
+
+    # Inference by the AUs net:
+    aus = []
+    for face_img in data['faces']:
+        aus.append(aus_model.inference(face_img)[0])
+
+    aus_dict = []
+    for au in aus:
+        aus_dict.append(make_aus_dict(au))
+    data['aus'] = aus_dict[0]
+
+    # Show the predicted AUs:
+    print ('===Action Units:')
+    for k,v in data['aus'].items():
+        print ('{}: {:4f}'.format(k,v))
+
+    print('RetinaFace+AUs has been warmed up!')
+
+
 class RetinaAUsModel(object):
     LABEL = ['retina+aus_live']
     SENDS_VIDEO = True
@@ -185,7 +228,7 @@ class RetinaAUsModel(object):
         # Warmup:
         if 'warmup_img' in conf['input']:
             img = cv2.imread(conf['input']['warmup_img'], 1)
-            # warmup_holoport_pipeline(img, self.yolo, self.yolo_args, self.vibe, self.vibe_args)
+            warmup_pipeline(img, self.retina, self.retina_args, self.aus_model, self.aus_args)
 
         # Make queues, events and threads:
         self.break_event = threading.Event()
