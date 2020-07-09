@@ -27,13 +27,13 @@ sudo systemctl restart docker
 Add the required libraries to the requirements.txt
 ```
 
-### Build & run dockerfile for HoloPortationRT ###
+### Build & run dockerfile for HoloPortRT (YOLOv3-RT + VIBE-RT + LWGAN-RT) ###
 ```
 sudo docker build -t holoport-cuda101:1.0.0 .
 sudo docker run --gpus all --rm --ipc=host -it holoport-cuda101:1.0.0 python3 docker_test.py
 ```
 
-### Build & run dockerfile for RetinaFace + AUs ###
+### Build & run dockerfile for RetinaFace-RT + AUs-RT ###
 ```
 sudo docker build -f Dockerfile-aus -t aus-cuda101:1.0.0 .
 sudo docker run --gpus all --rm --ipc=host -it aus-cuda101:1.0.0 python3 docker_test.py
