@@ -52,7 +52,7 @@ COPY . .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # install RetinaFace-RT
-WORKDIR /usr/src/app/holoport/thirdparty/retinafacert
+WORKDIR /usr/src/app/holoportrt/thirdparty/retinafacert
 RUN python3 setup.py install
 
 # install HOLOPORT-RT
