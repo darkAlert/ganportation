@@ -1,5 +1,5 @@
 retina:
-  model_path: '/usr/src/models/yolo_data/retinaface_data/Resnet50_Final.pth'
+  model_path: '/usr/src/models/retinaface_data/Resnet50_Final.pth'
   pretrain_mobilenet: ''
   network: 'resnet50'
   threshold: 0.6
@@ -10,7 +10,7 @@ retina:
   cudnn_benchmark: False
 
 aus:
-  model_path: '/usr/src/data/action_units_model_resnet_50.pt'
+  model_path: '/usr/src/models/action_units_model_resnet_50.pt'
   face_size: 224
   make_dict: True
   gpu_id: '0'

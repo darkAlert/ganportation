@@ -1,6 +1,6 @@
 retina:
-  model_path: '/usr/src/models/yolo_data/retinaface_data/mobilenet0.25_Final.pth'
-  pretrain_mobilenet: '/usr/src/models/yolo_data/retinaface_data/mobilenetV1X0.25_pretrain.tar'
+  model_path: '/usr/src/models/retinaface_data/mobilenet0.25_Final.pth'
+  pretrain_mobilenet: '/usr/src/models/retinaface_data/mobilenetV1X0.25_pretrain.tar'
   network: 'mobile0.25'
   threshold: 0.6
   img_width: 1280
@@ -10,7 +10,7 @@ retina:
   cudnn_benchmark: False
 
 aus:
-  model_path: '/usr/src/data/action_units_model_resnet_50.pt'
+  model_path: '/usr/src/models/action_units_model_resnet_50.pt'
   face_size: 224
   make_dict: True
   gpu_id: '0'
