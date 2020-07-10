@@ -16,7 +16,7 @@ aus:
   gpu_id: '0'
 
 input:
-  warmup_img: '/usr/src/app/holoportrt/holoport/tests/samples/img0.jpeg'
+  warmup_img: '/usr/src/app/holoport/tests/samples/img0.jpeg'
 
 output:
   result_dir: '/usr/src/app/outputs/retinaface-aus/'
