@@ -32,11 +32,19 @@ Add the required libraries to the requirements.txt
 sudo docker build -t holoport-cuda101:1.0.0 .
 sudo docker run --gpus all --rm --ipc=host -it holoport-cuda101:1.0.0 python3 docker_test.py
 ```
+or you can install it by running a bash script:
+```
+sh install.sh
+```
 
 ### Build & run dockerfile containing FacialAnimation (RetinaFace-RT + AUs-RT) ###
 ```
 sudo docker build -f Dockerfile-aus -t aus-cuda101:1.0.0 .
 sudo docker run --gpus all --rm --ipc=host -it aus-cuda101:1.0.0 python3 docker_test.py
+```
+or you can install it by running a bash script:
+```
+sh install-aus.sh
 ```
 
 ### Upload resources from Azure Blob Storage ###
