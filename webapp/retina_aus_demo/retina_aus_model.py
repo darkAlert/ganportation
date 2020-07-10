@@ -222,6 +222,7 @@ class RetinaAUsModel(object):
         self.connector.logger.info('Config has been loaded from {}'.format(path_to_conf))
 
         # Init models:
+        print (conf['retina'])
         self.retina, self.retina_args = init_retina(conf['retina'])
         self.aus_model, self.aus_args = init_aus(conf['aus'])
 
