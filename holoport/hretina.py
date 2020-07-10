@@ -2,11 +2,11 @@ import argparse
 import torch
 import numpy as np
 import cv2
-from retinaface.data import cfg_mnet, cfg_re50
-from retinaface.models.retinaface import RetinaFace
-from retinaface.layers.functions.prior_box import PriorBox
-from retinaface.utils.box_utils import decode, decode_landm
-from retinaface.utils.nms.py_cpu_nms import py_cpu_nms
+from retinart.data import cfg_mnet, cfg_re50
+from retinart.models.retinaface import RetinaFace
+from retinart.layers.functions.prior_box import PriorBox
+from retinart.utils.box_utils import decode, decode_landm
+from retinart.utils.nms.py_cpu_nms import py_cpu_nms
 
 
 def load_model(model, pretrained_path, device):

@@ -57,7 +57,6 @@ RUN python3 setup.py install
 # install RetinaFace-RT
 WORKDIR /usr/src/app/thirdparty/retinafacert
 RUN python3 setup.py install
-RUN python3 -c 'import retinaface'
 
 # set a directory for the app
 WORKDIR /usr/src/app
