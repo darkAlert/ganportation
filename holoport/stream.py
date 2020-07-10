@@ -2,8 +2,13 @@ import os
 import cv2
 import threading
 import time
-from lwganrt.utils.util import clear_dir
 
+def clear_dir(path):
+    import shutil
+    if os.path.exists(path):
+        shutil.rmtree(path)
+
+    return mkdir(path)
 
 def get_paths(path_to_src):
     paths = []
