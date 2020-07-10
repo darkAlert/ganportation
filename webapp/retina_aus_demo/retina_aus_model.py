@@ -211,7 +211,7 @@ class RetinaAUsModel(object):
     SENDS_VIDEO = True
     SENDS_DATA = True
 
-    def __init__(self, connector, label=None, path_to_conf='retina-aus_live.yaml'):
+    def __init__(self, connector, label=None, path_to_conf='retina-mobilenet-aus_live.yaml'):
         self.connector = connector
         self.connector.enable_frame_throw()
         self.name = 'RetinaAUsModel'
@@ -222,7 +222,6 @@ class RetinaAUsModel(object):
         self.connector.logger.info('Config has been loaded from {}'.format(path_to_conf))
 
         # Init models:
-        print (conf['retina'])
         self.retina, self.retina_args = init_retina(conf['retina'])
         self.aus_model, self.aus_args = init_aus(conf['aus'])
 
@@ -302,7 +301,7 @@ def main(path_to_conf):
     # run_video_stream(path_to_conf)
 
 if __name__ == '__main__':
-    path_to_conf = 'retina-aus_live.yaml'
+    path_to_conf = 'retina-mobilenet-aus_live.yaml'
     if len(sys.argv) > 1:
         path_to_conf = sys.argv[1]
         sys.argv = [sys.argv[0]]
